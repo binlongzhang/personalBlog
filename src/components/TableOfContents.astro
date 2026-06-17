@@ -18,12 +18,8 @@ const tocHeadings = headings.filter(h => h.depth >= 1 && h.depth <= 3);
 {tocHeadings.length > 0 && (
 	<nav class="toc expanded" aria-label="Table of Contents">
 		<button class="toc-tab" aria-label="展开/收起目录">
-			<svg class="toc-tab-icon" width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
-				<path d="M2 3.5h12v1.5H2zM2 7.25h12v1.5H2zM2 11h8v1.5H2z"/>
-			</svg>
-			<svg class="toc-tab-arrow" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-				<path d="M10.5 8l-4 4V4z"/>
-			</svg>
+			<span class="toc-tab-label toc-label-expand">展开目录</span>
+			<span class="toc-tab-label toc-label-collapse">收起目录</span>
 		</button>
 		<div class="toc-content">
 			<ul class="toc-list">
@@ -47,96 +43,112 @@ const tocHeadings = headings.filter(h => h.depth >= 1 && h.depth <= 3);
 		transition: transform 0.3s ease;
 	}
 
-	/* 侧边标签页 */
+	/* 侧边把手：朴素、半透明，hover 时才点亮 */
 	.toc-tab {
 		position: absolute;
 		left: 0;
 		top: 50%;
 		transform: translateY(-50%);
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 0.4rem;
-		background: linear-gradient(135deg, rgb(var(--accent)), rgba(var(--accent), 0.8));
-		color: white;
-		border: none;
-		border-radius: 0 8px 8px 0;
-		padding: 0.9rem 0.45rem;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.82);
+		backdrop-filter: blur(8px);
+		color: rgb(var(--gray-dark));
+		border: 1px solid rgba(var(--gray-light), 0.8);
+		border-left: none;
+		border-radius: 0 7px 7px 0;
+		padding: 1.3rem 0.75rem;
 		cursor: pointer;
-		box-shadow: 2px 2px 8px rgba(var(--black), 0.15);
-		transition: all 0.3s ease;
+		box-shadow: 1px 0 6px rgba(var(--black), 0.05);
+		transition: color 0.2s ease, background 0.2s ease;
 		z-index: 101;
 	}
 
+	/* 把手上的竖排文字 */
+	.toc-tab-label {
+		writing-mode: vertical-rl;
+		text-orientation: upright;
+		font-size: 1.05rem;
+		font-weight: 500;
+		letter-spacing: 0.14em;
+		line-height: 1;
+	}
+
+	/* 收起态显示「展开目录」，展开态显示「收起目录」 */
+	.toc-label-collapse {
+		display: none;
+	}
+	.toc.expanded .toc-label-expand {
+		display: none;
+	}
+	.toc.expanded .toc-label-collapse {
+		display: inline;
+	}
+
 	.toc-tab:hover {
-		padding-right: 0.65rem;
-		box-shadow: 3px 3px 12px rgba(var(--black), 0.25);
+		background: #fff;
+		color: rgb(var(--accent-rgb));
 	}
 
-	/* 展开时箭头翻转指向收起方向 */
-	.toc-tab-arrow {
-		transition: transform 0.3s ease;
-	}
-
-	.toc.expanded .toc-tab-arrow {
-		transform: rotate(180deg);
-	}
-
-	/* 主内容区 */
+	/* 主内容区：垂直居中、限高的半透明悬浮卡片（A 方案） */
 	.toc-content {
 		position: absolute;
 		left: 0;
-		top: 0;
-		width: 280px;
-		height: 100vh;
-		background: linear-gradient(to bottom,
-			rgba(255, 255, 255, 0.98),
-			rgba(250, 250, 252, 0.98));
-		backdrop-filter: blur(10px);
-		border-right: 1px solid rgba(var(--gray-light), 0.6);
-		box-shadow: 4px 0 16px rgba(var(--black), 0.08);
-		transform: translateX(-280px);
+		top: 50%;
+		height: auto;
+		max-height: min(82vh, 760px);
+		width: 240px;
+		background: rgba(252, 252, 253, 0.8);
+		backdrop-filter: blur(12px);
+		border: 1px solid rgba(var(--gray-light), 0.7);
+		border-left: none;
+		border-radius: 0 12px 12px 0;
+		box-shadow: 4px 0 20px rgba(var(--black), 0.06);
+		transform: translate(-250px, -50%);
 		transition: transform 0.3s ease;
 		display: flex;
 		flex-direction: column;
+		overflow: hidden;
 	}
 
 	.toc.expanded .toc-content {
-		transform: translateX(0);
+		transform: translate(0, -50%);
 	}
 
 	.toc.expanded .toc-tab {
-		left: 280px;
+		left: 240px;
 	}
 
 	.toc-list {
 		list-style: none;
 		margin: 0;
-		padding: 1.5rem;
+		padding: 0.9rem 0.85rem;
 		overflow-y: auto;
 		flex: 1;
+		font-size: 0.9rem;
 	}
 
 	.toc-list li {
-		margin: 0.4rem 0;
-		line-height: 1.4;
+		margin: 0;
+		line-height: 1.3;
 	}
 
 	/* h1 标题样式（最顶层，最醒目） */
 	.toc-list li.toc-level-1 {
 		margin-left: 0;
-		margin-top: 0.6rem;
+		margin-top: 0.25rem;
 	}
 
 	.toc-list li.toc-level-1 > a {
 		font-weight: 700;
 		color: rgb(var(--black));
-		font-size: 1.02em;
+		font-size: 1em;
 	}
 
 	/* h2 标题样式（缩进一级） */
 	.toc-list li.toc-level-2 {
-		margin-left: 1rem;
+		margin-left: 0.85rem;
 	}
 
 	.toc-list li.toc-level-2 > a {
@@ -146,7 +158,7 @@ const tocHeadings = headings.filter(h => h.depth >= 1 && h.depth <= 3);
 
 	/* h3 标题样式（缩进两级） */
 	.toc-list li.toc-level-3 {
-		margin-left: 2rem;
+		margin-left: 1.7rem;
 		font-size: 0.88em;
 	}
 
@@ -157,24 +169,24 @@ const tocHeadings = headings.filter(h => h.depth >= 1 && h.depth <= 3);
 	.toc-list a {
 		display: block;
 		text-decoration: none;
-		padding: 0.4rem 0.75rem;
+		padding: 0.2rem 0.5rem;
 		border-radius: 6px;
 		transition: all 0.2s ease;
 		border-left: 3px solid transparent;
 	}
 
 	.toc-list a:hover {
-		background: rgba(var(--accent), 0.1);
-		color: rgb(var(--accent));
-		border-left-color: rgba(var(--accent), 0.4);
+		background: rgba(var(--accent-rgb), 0.1);
+		color: rgb(var(--accent-rgb));
+		border-left-color: rgba(var(--accent-rgb), 0.4);
 		transform: translateX(2px);
 	}
 
 	.toc-list a.active {
-		background: rgba(var(--accent), 0.15);
-		color: rgb(var(--accent));
+		background: rgba(var(--accent-rgb), 0.15);
+		color: rgb(var(--accent-rgb));
 		font-weight: 600;
-		border-left-color: rgb(var(--accent));
+		border-left-color: rgb(var(--accent-rgb));
 	}
 
 	/* 屏幕小于 1400px 时隐藏目录 */
@@ -193,13 +205,6 @@ const tocHeadings = headings.filter(h => h.depth >= 1 && h.depth <= 3);
 	if (tocTab && tocNav) {
 		tocTab.addEventListener('click', () => {
 			tocNav.classList.toggle('expanded');
-		});
-
-		// 点击目录链接后自动收起
-		document.querySelectorAll('.toc-list a').forEach(link => {
-			link.addEventListener('click', () => {
-				tocNav.classList.remove('expanded');
-			});
 		});
 	}
 
