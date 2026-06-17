@@ -3,9 +3,6 @@ title: 'Anthropic Engieering Docs 笔记'
 pubDate: 2026-04-01
 description: 'Anthropic Engieering Blog的学习笔记'
 author: 'binlong Zhang'
-image:
-    url: 'https://docs.astro.build/assets/rose.webp'
-    alt: 'The Astro logo on a dark background with a pink glow.'
 tags: ["Anthropic", "LLM Engieering", "AI Coding"]
 ---
 
