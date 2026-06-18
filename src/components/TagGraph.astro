@@ -1,0 +1,599 @@
+---
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+
+type Node = {
+	id: string;
+	type: 'post' | 'tag';
+	label: string;
+	url?: string;
+	degree: number;
+};
+type Link = { source: string; target: string };
+
+const tagDegree = new Map<string, number>();
+const links: Link[] = [];
+const postNodes: Node[] = [];
+
+for (const post of posts) {
+	const tags = post.data.tags ?? [];
+	const postId = `post:${post.id}`;
+	postNodes.push({
+		id: postId,
+		type: 'post',
+		label: post.data.title,
+		url: `/blog/${post.id}/`,
+		degree: tags.length,
+	});
+	for (const t of tags) {
+		const tagId = `tag:${t}`;
+		tagDegree.set(tagId, (tagDegree.get(tagId) ?? 0) + 1);
+		links.push({ source: postId, target: tagId });
+	}
+}
+
+const tagNodes: Node[] = [...tagDegree.entries()].map(([id, deg]) => ({
+	id,
+	type: 'tag',
+	label: id.slice('tag:'.length),
+	degree: deg,
+}));
+
+const nodes: Node[] = [...postNodes, ...tagNodes];
+const graphData = { nodes, links };
+---
+
+<div id="tag-graph" class="graph-canvas">
+	<svg id="tag-graph-svg" aria-label="文章与标签关系图"></svg>
+	<div id="graph-tooltip" class="graph-tooltip" role="tooltip"></div>
+
+	<div class="graph-hero">
+		<p class="hero-lead"><em>这里散落着我读过、写过、想过的东西</em></p>
+		<p class="hero-aside">随意四处看看，希望能对你有所帮助…</p>
+	</div>
+
+	<div class="graph-toolbar">
+		<input
+			id="graph-search"
+			type="search"
+			placeholder="搜索标签或文章…"
+			autocomplete="off"
+			spellcheck="false"
+		/>
+		<div class="graph-legend" role="group" aria-label="筛选节点类型">
+			<div class="legend-item">
+				<button
+					type="button"
+					class="dot-btn dot-post is-active"
+					data-filter="post"
+					aria-label="切换文章可见"
+					title="点击切换文章"
+				></button>
+				<span class="legend-label">文章</span>
+			</div>
+			<div class="legend-item">
+				<button
+					type="button"
+					class="dot-btn dot-tag is-active"
+					data-filter="tag"
+					aria-label="切换标签可见"
+					title="点击切换标签"
+				></button>
+				<span class="legend-label">标签</span>
+			</div>
+			<button id="graph-reset" type="button" title="重置视图" aria-label="重置视图">
+				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+					<path fill="currentColor" d="M8 3V1L4 4l4 3V5a3 3 0 1 1-3 3H3a5 5 0 1 0 5-5z"/>
+				</svg>
+			</button>
+		</div>
+	</div>
+
+	<p class="graph-hint">拖拽 · 滚轮缩放 · 点击文章跳转 · 点击标签高亮相关</p>
+</div>
+
+<script type="application/json" id="graph-data" set:html={JSON.stringify(graphData)} />
+
+<style>
+	/* 画布占满 Header 下方的整个视口，背景就是页面背景 */
+	.graph-canvas {
+		position: fixed;
+		left: 0;
+		right: 0;
+		top: var(--graph-top, 64px);
+		bottom: 0;
+		background:
+			radial-gradient(circle at 1px 1px, rgba(var(--gray-light), 0.7) 1px, transparent 0)
+			0 0 / 28px 28px,
+			linear-gradient(180deg, #fafbff 0%, #f5f7fb 100%);
+	}
+	#tag-graph-svg {
+		width: 100%;
+		height: 100%;
+		display: block;
+		cursor: grab;
+	}
+	#tag-graph-svg:active { cursor: grabbing; }
+
+	/* 欢迎语，浮在画布上方居中，不阻挡拖拽 */
+	.graph-hero {
+		position: absolute;
+		top: 4.5%;
+		left: 50%;
+		transform: translateX(-50%);
+		text-align: left;
+		pointer-events: none;
+		max-width: min(90%, 40rem);
+		z-index: 3;
+		animation: hero-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+		font-family: Georgia, 'Songti SC', 'STSong', serif;
+		font-style: italic;
+	}
+	.graph-hero p {
+		margin: 0;
+		font-size: clamp(1rem, 1.4vw, 1.35rem);
+		color: rgb(var(--gray-dark));
+		line-height: 1.9;
+		letter-spacing: 0.05em;
+	}
+	.hero-aside {
+		padding-left: 2.6em;
+	}
+	.graph-hero em {
+		font-style: italic;
+		color: #c2823c;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	@keyframes hero-in {
+		from { opacity: 0; transform: translate(-50%, -0.6rem); }
+		to { opacity: 1; transform: translate(-50%, 0); }
+	}
+
+	/* 浮动工具栏：右上角胶囊条，不再占据文档流 */
+	.graph-toolbar {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		padding: 0.5rem 0.6rem;
+		background: rgba(255, 255, 255, 0.78);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border-radius: 14px;
+		box-shadow: 0 4px 18px rgba(var(--gray), 0.18);
+		z-index: 5;
+	}
+	#graph-search {
+		width: 220px;
+		padding: 0.4rem 0.75rem;
+		border: 1px solid transparent;
+		border-radius: 10px;
+		font-size: 0.9rem;
+		background: rgba(var(--gray-light), 0.45);
+		color: rgb(var(--black));
+	}
+	#graph-search:focus {
+		outline: none;
+		background: white;
+		border-color: rgba(var(--accent-rgb), 0.45);
+		box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+	}
+	.graph-legend {
+		display: flex;
+		align-items: center;
+		gap: 0.85rem;
+		color: rgb(var(--gray-dark));
+		font-size: 0.88rem;
+	}
+	.legend-item {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.legend-label {
+		user-select: none;
+		color: rgb(var(--gray-dark));
+	}
+	/* 圆球本身就是按钮 */
+	.dot-btn {
+		width: 18px;
+		height: 18px;
+		padding: 0;
+		border-radius: 50%;
+		border: 2px solid transparent;
+		cursor: pointer;
+		opacity: 0.4;
+		transition: 0.15s ease;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+	}
+	.dot-btn:hover { transform: scale(1.12); opacity: 0.85; }
+	.dot-btn.is-active {
+		opacity: 1;
+		border-color: rgba(255, 255, 255, 0.95);
+		box-shadow: 0 0 0 2px currentColor, 0 1px 3px rgba(0, 0, 0, 0.2);
+	}
+	.dot-btn.dot-post { background: #6b7280; color: rgba(107, 114, 128, 0.45); }
+	.dot-btn.dot-tag { background: #c2823c; color: rgba(194, 130, 60, 0.45); }
+	#graph-reset {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 30px;
+		height: 30px;
+		border: none;
+		border-radius: 50%;
+		background: transparent;
+		cursor: pointer;
+		color: rgb(var(--gray));
+		transition: 0.15s ease;
+	}
+	#graph-reset:hover {
+		background: rgba(var(--accent-rgb), 0.1);
+		color: rgb(var(--accent));
+	}
+
+	.graph-tooltip {
+		position: absolute;
+		pointer-events: none;
+		background: rgba(20, 20, 20, 0.92);
+		color: #fff;
+		padding: 0.35rem 0.6rem;
+		font-size: 0.8rem;
+		border-radius: 6px;
+		opacity: 0;
+		transform: translate(-50%, -130%);
+		transition: opacity 0.12s ease;
+		white-space: nowrap;
+		max-width: 320px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		z-index: 4;
+	}
+	.graph-hint {
+		position: absolute;
+		left: 50%;
+		bottom: 1rem;
+		transform: translateX(-50%);
+		margin: 0;
+		padding: 0.35rem 0.85rem;
+		color: rgb(var(--gray));
+		font-size: 0.78rem;
+		background: rgba(255, 255, 255, 0.72);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		border-radius: 999px;
+		white-space: nowrap;
+		pointer-events: none;
+	}
+	@media (max-width: 720px) {
+		.graph-toolbar {
+			top: 0.6rem;
+			right: 0.6rem;
+			left: 0.6rem;
+			flex-wrap: wrap;
+		}
+		#graph-search { width: 100%; }
+	}
+</style>
+
+<script>
+	import * as d3 from 'https://esm.sh/d3@7';
+
+	// 让画布顶部精准贴在 Header 下沿（避免估算 64px）
+	const headerEl = document.querySelector('header') as HTMLElement | null;
+	const setGraphTop = () => {
+		const h = headerEl?.offsetHeight ?? 64;
+		document.documentElement.style.setProperty('--graph-top', `${h}px`);
+	};
+	setGraphTop();
+	window.addEventListener('resize', setGraphTop);
+
+	type GNode = {
+		id: string;
+		type: 'post' | 'tag';
+		label: string;
+		url?: string;
+		degree: number;
+		x?: number; y?: number; fx?: number | null; fy?: number | null;
+	};
+	type GLink = { source: string | GNode; target: string | GNode };
+
+	const dataEl = document.getElementById('graph-data');
+	if (!dataEl) throw new Error('graph data missing');
+	const raw = JSON.parse(dataEl.textContent || '{"nodes":[],"links":[]}') as {
+		nodes: GNode[]; links: GLink[];
+	};
+
+	const svgEl = document.getElementById('tag-graph-svg') as SVGSVGElement | null;
+	const containerEl = document.getElementById('tag-graph');
+	const tooltipEl = document.getElementById('graph-tooltip');
+	if (!svgEl || !containerEl || !tooltipEl) throw new Error('graph dom missing');
+
+	const svg = d3.select(svgEl);
+	const tooltip = d3.select(tooltipEl);
+
+	let width = containerEl.clientWidth;
+	let height = containerEl.clientHeight;
+	svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+	const root = svg.append('g').attr('class', 'graph-root');
+	const linkLayer = root.append('g').attr('class', 'links');
+	const nodeLayer = root.append('g').attr('class', 'nodes');
+
+	// adjacency for hover highlighting
+	const neighbors = new Map<string, Set<string>>();
+	for (const n of raw.nodes) neighbors.set(n.id, new Set());
+	for (const l of raw.links) {
+		const s = typeof l.source === 'string' ? l.source : l.source.id;
+		const t = typeof l.target === 'string' ? l.target : l.target.id;
+		neighbors.get(s)!.add(t);
+		neighbors.get(t)!.add(s);
+	}
+
+	// 文章稍大、标签略小，二者尺寸接近
+	const radius = (n: GNode) => (n.type === 'tag' ? 6 : 8);
+	// 每类纯色（不再用深浅编码引用数）
+	// 文章用沉稳灰、标签用赭石橙，灰/橙搭配区分度清晰且不刺眼
+	const fill = (n: GNode) => (n.type === 'tag' ? '#c2823c' : '#6b7280');
+
+	const simulation = d3
+		.forceSimulation<GNode>(raw.nodes)
+		.force(
+			'link',
+			d3
+				.forceLink<GNode, GLink>(raw.links)
+				.id((d) => d.id)
+				.distance((l) => {
+					const s = l.source as GNode, t = l.target as GNode;
+					return s.type === t.type ? 100 : 75;
+				})
+				.strength(0.45),
+		)
+		// 强斥力 + 大作用范围，让节点天然铺到画布尺度
+		.force('charge', d3.forceManyBody().strength(-450).distanceMax(800))
+		// 整体质心固定在画布中心
+		.force('center', d3.forceCenter(width / 2, height / 2))
+		// 水平方向收一点（避免横向连线被拉太长），垂直方向紧
+		.force('x', d3.forceX(width / 2).strength(0.07))
+		.force('y', d3.forceY(height / 2).strength(0.18))
+		// 大碰撞半径：节点之间留出文字空间，缓解 label 重叠
+		.force('collide', d3.forceCollide<GNode>().radius((d) => radius(d) + 22));
+
+	const link = linkLayer
+		.selectAll<SVGLineElement, GLink>('line')
+		.data(raw.links)
+		.join('line')
+		.attr('stroke', 'rgba(120,120,120,0.45)')
+		.attr('stroke-width', 1);
+
+	const node = nodeLayer
+		.selectAll<SVGGElement, GNode>('g.node')
+		.data(raw.nodes)
+		.join('g')
+		.attr('class', 'node')
+		.style('cursor', (d) => (d.type === 'post' ? 'pointer' : 'default'));
+
+	node
+		.append('circle')
+		.attr('r', radius)
+		.attr('fill', fill)
+		.attr('stroke', '#fff')
+		.attr('stroke-width', 1.5);
+
+	// 标签节点中央显示引用数
+	node
+		.filter((d) => d.type === 'tag')
+		.append('text')
+		.attr('class', 'count-label')
+		.text((d) => d.degree)
+		.attr('text-anchor', 'middle')
+		.attr('dy', '0.34em')
+		.attr('font-size', 9)
+		.attr('font-weight', 700)
+		.attr('fill', '#5a2a00')
+		.attr('pointer-events', 'none');
+
+	node
+		.append('text')
+		.text((d) => d.label)
+		.attr('font-size', (d) => (d.type === 'tag' ? 12 : 10))
+		.attr('font-weight', (d) => (d.type === 'tag' ? 600 : 400))
+		.attr('fill', '#333')
+		.attr('dx', (d) => radius(d) + 4)
+		.attr('dy', '0.32em')
+		.attr('paint-order', 'stroke')
+		.attr('stroke', 'rgba(255,255,255,0.85)')
+		.attr('stroke-width', 3);
+
+	// drag
+	const drag = d3
+		.drag<SVGGElement, GNode>()
+		.on('start', (event, d) => {
+			if (!event.active) simulation.alphaTarget(0.3).restart();
+			d.fx = d.x; d.fy = d.y;
+		})
+		.on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+		.on('end', (event, d) => {
+			if (!event.active) simulation.alphaTarget(0);
+			d.fx = null; d.fy = null;
+		});
+	node.call(drag as any);
+
+	// tooltip + hover highlight
+	function setHighlight(active: GNode | null) {
+		if (!active) {
+			node.selectAll('circle').attr('opacity', 1);
+			node.selectAll('text').attr('opacity', 1);
+			link.attr('opacity', 1).attr('stroke', 'rgba(120,120,120,0.45)');
+			return;
+		}
+		const adj = neighbors.get(active.id) ?? new Set<string>();
+		node.selectAll('circle').attr('opacity', (d: any) =>
+			d.id === active.id || adj.has(d.id) ? 1 : 0.18,
+		);
+		node.selectAll('text').attr('opacity', (d: any) =>
+			d.id === active.id || adj.has(d.id) ? 1 : 0.18,
+		);
+		link
+			.attr('opacity', (l: any) =>
+				(l.source.id ?? l.source) === active.id || (l.target.id ?? l.target) === active.id
+					? 1
+					: 0.08,
+			)
+			.attr('stroke', (l: any) =>
+				(l.source.id ?? l.source) === active.id || (l.target.id ?? l.target) === active.id
+					? '#c2823c'
+					: 'rgba(120,120,120,0.45)',
+			);
+	}
+
+	let pinned: GNode | null = null;
+	let showPost = true;
+	let showTag = true;
+	let query = '';
+
+	const filterActive = () => !showPost || !showTag || query !== '';
+
+	// combined view: pinned highlight > active filter > full visibility
+	function applyView() {
+		if (pinned) { setHighlight(pinned); return; }
+		if (!filterActive()) { setHighlight(null); return; }
+
+		const matched = new Set<string>();
+		for (const n of raw.nodes) {
+			const typeOk = (n.type === 'post' && showPost) || (n.type === 'tag' && showTag);
+			const textOk = query === '' || n.label.toLowerCase().includes(query);
+			if (typeOk && textOk) matched.add(n.id);
+		}
+		const near = new Set<string>();
+		for (const id of matched)
+			for (const nb of neighbors.get(id) ?? [])
+				if (!matched.has(nb)) near.add(nb);
+
+		const op = (id: string) => (matched.has(id) ? 1 : near.has(id) ? 0.45 : 0.08);
+		node.selectAll('circle').attr('opacity', (d: any) => op(d.id));
+		node.selectAll('text').attr('opacity', (d: any) => op(d.id));
+		link
+			.attr('opacity', (l: any) => {
+				const s = l.source.id ?? l.source, t = l.target.id ?? l.target;
+				return op(s) > 0.4 && op(t) > 0.4 ? 0.8 : 0.04;
+			})
+			.attr('stroke', 'rgba(120,120,120,0.45)');
+	}
+
+	node
+		.on('mouseenter', (event: MouseEvent, d) => {
+			if (!pinned && !filterActive()) setHighlight(d);
+			tooltip
+				.style('opacity', '1')
+				.text(d.type === 'tag' ? `#${d.label} · ${d.degree} 篇` : d.label);
+		})
+		.on('mousemove', (event: MouseEvent) => {
+			const rect = containerEl.getBoundingClientRect();
+			tooltip
+				.style('left', `${event.clientX - rect.left}px`)
+				.style('top', `${event.clientY - rect.top}px`);
+		})
+		.on('mouseleave', () => {
+			tooltip.style('opacity', '0');
+			if (!pinned) applyView();
+		})
+		.on('click', (event: MouseEvent, d) => {
+			event.stopPropagation();
+			if (d.type === 'post' && d.url) {
+				window.location.href = d.url;
+				return;
+			}
+			pinned = pinned && pinned.id === d.id ? null : d;
+			applyView();
+		});
+
+	svg.on('click', () => { pinned = null; applyView(); });
+
+	// zoom & pan
+	const zoom = d3.zoom<SVGSVGElement, unknown>()
+		.scaleExtent([0.15, 4])
+		.on('zoom', (event) => root.attr('transform', event.transform.toString()));
+	svg.call(zoom as any);
+
+	// 初始/重置时给画布一个轻微放大，以画布中心为锚点
+	const INITIAL_SCALE = 1.25;
+	function setInitialZoom(duration = 0) {
+		const k = INITIAL_SCALE;
+		const t = d3.zoomIdentity
+			.translate((width * (1 - k)) / 2, (height * (1 - k)) / 2)
+			.scale(k);
+		const sel = duration > 0 ? svg.transition().duration(duration) : svg;
+		(sel as any).call(zoom.transform, t);
+	}
+	setInitialZoom();
+
+	const searchEl = document.getElementById('graph-search') as HTMLInputElement | null;
+	const filterBtns = Array.from(
+		document.querySelectorAll<HTMLButtonElement>('.dot-btn'),
+	);
+
+	document.getElementById('graph-reset')?.addEventListener('click', () => {
+		pinned = null;
+		showPost = true;
+		showTag = true;
+		query = '';
+		if (searchEl) searchEl.value = '';
+		filterBtns.forEach((b) => b.classList.add('is-active'));
+		applyView();
+		simulation.alpha(0.6).restart();
+		setInitialZoom(450);
+	});
+
+	// type filter buttons
+	filterBtns.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const kind = btn.dataset.filter; // 'post' | 'tag'
+			if (kind === 'post') showPost = !showPost;
+			else if (kind === 'tag') showTag = !showTag;
+			if (!showPost && !showTag) {
+				if (kind === 'post') showTag = true;
+				else showPost = true;
+			}
+			pinned = null;
+			filterBtns.forEach((b) => {
+				const on = b.dataset.filter === 'post' ? showPost : showTag;
+				b.classList.toggle('is-active', on);
+			});
+			applyView();
+		});
+	});
+
+	// search filter
+	searchEl?.addEventListener('input', () => {
+		query = (searchEl.value || '').trim().toLowerCase();
+		pinned = null;
+		applyView();
+	});
+
+	// ticking
+	simulation.on('tick', () => {
+		link
+			.attr('x1', (d: any) => d.source.x)
+			.attr('y1', (d: any) => d.source.y)
+			.attr('x2', (d: any) => d.target.x)
+			.attr('y2', (d: any) => d.target.y);
+		node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
+	});
+
+	// resize
+	const ro = new ResizeObserver(() => {
+		width = containerEl.clientWidth;
+		height = containerEl.clientHeight;
+		svg.attr('viewBox', `0 0 ${width} ${height}`);
+		simulation.force('center', d3.forceCenter(width / 2, height / 2));
+		simulation.force('x', d3.forceX(width / 2).strength(0.07));
+		simulation.force('y', d3.forceY(height / 2).strength(0.18));
+		simulation.alpha(0.3).restart();
+	});
+	ro.observe(containerEl);
+</script>

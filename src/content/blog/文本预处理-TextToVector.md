@@ -1,21 +1,19 @@
 ---
 title: 'nlp-preprocessing'
 pubDate: 2021-04-04
-description: ''
+description: '简述nlp文本预处理基础'
 author: 'binlong Zhang'
 tags: ["NLP", "Text2Vec"]
 ---
 > 简述nlp文本预处理的基本原理和操作过程
+
 # Text To Vector
 
 ## one-hot vector
 
 - 优势
-
 - - 操作简单容易理解
-
 - 劣势
-
 - - 完全割裂词与词之间的连续
   - 大语料下向量长度过大，造成维度爆炸
 
@@ -32,7 +30,7 @@ for token in vocab:
     token_index = t.texts_to_sequences([token])[0][0]-1
     zero_list[token_index] = 1
     print(token,'的one-hot编码为：',zero_list)
-    
+  
 # 使用joblib工具保存映射器，以便于之后使用
 tokenizer_path = './Tokenizer'
 joblib.dump(t,tokenizer_path)
@@ -104,12 +102,9 @@ model.load_model('fil9.bin')
 # 文本数据分析
 
 - 目的
-
 - - 帮助我们理解预料，检查出预料可能存在的问题
   - 指导训练过程中超参数的选择
-
 - 常用的几种文本数据分析方法
-
 - - 标签数量分布
   - 句子长度分布
   - 词频统计与关键词词云

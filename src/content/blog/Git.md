@@ -3,16 +3,15 @@ title: 'Git'
 pubDate: 2021-04-04
 description: 'git基础'
 author: 'binlong Zhang'
-tags: ["Git", "tools"]
+tags: ["tools"]
 ---
-
 # 简介
 
 Git是一个**开源的分布式版本管理**系统；
 
 **查看git版本**
 
-``` bash
+```bash
 git --version
 ```
 
@@ -21,23 +20,18 @@ git --version
 Git提供了一个叫做git config的工具，专门用来配置或读取相应工作环境变量；
 
 - /etc/gitconfig 文件
-
 - - 系统中对所有用户普遍适用的配置;
   - 使用gitconfig时用 --system 选项，读写的就是这个文件；
-
 - ~/.gitconfig 文件
-
 - - 用户目录下的配置文件只适用于该用户；
   - 若使用gitconfig时用 --global 选项，读写的就是这个文件;
-
 - 当前项目的git中的配置文件（工作目录中的.git/config文件）
-
 - - 这里的配置仅仅对当前项目有效；
   - 每一个级别的配置都会覆盖上层的相同配置；故.git/config里的配置会覆盖/etc/gitconfig中的同名变量；
 
 ## 用户信息
 
-``` bash
+```bash
 # 使用 -global 选项，更改的配置文件为用户目录下的，以后所有的项目都会默认使用这里的用户信息；
 git config --global user.name "username"
 git config --global user.email yourEmail@xxx.com
@@ -74,7 +68,7 @@ git config -list
 
 配置
 
-``` bash
+```bash
 # git 的设置使用 git config 命令
 
 # 显示当前的 git 配置信息
@@ -95,7 +89,7 @@ git config --global user.email 1094859023@qq.com
 
 初始化一个Git仓库，初始化完成后Git仓库会生成一个.git目录，改目录包含了资源的所有元数据，其他的项目目录保持不变；
 
-``` bash
+```bash
 # 初始化当前目录为git仓库
 git init
 
@@ -112,7 +106,7 @@ git commit -m "初始化项目版本"
 
 从现有的Git仓库中拷贝项目（类似 svn 的 checkout）
 
-``` bash
+```bash
 # 克隆仓库
 git clone <repo>
 
@@ -126,13 +120,13 @@ git clone git://github.com/schancon/grit.git mygrit
 
 ## 基本操作
 
-![](Git/git-op.jpg) 
+![](Git/git-op.jpg)
 
 | workspace | staging area  | local repository | remote repository |
 | --------- | ------------- | ---------------- | ----------------- |
 | 工作区    | 暂存区/缓冲区 | 或本地仓库       | 远程仓库          |
 
-``` bash
+```bash
 # 创建仓库命令
 git init        # 初始化仓库
 git clone       # 拷贝一份远程仓库,Download一个项目
@@ -159,7 +153,7 @@ git push        #上传远程代码并合并
 
 ## 忽略部分文件
 
-``` bash
+```bash
 touch .gitignore
 
 # 修改.gitignore文件，规则如下
@@ -170,10 +164,9 @@ log/*           //忽略log下的所有文件
 css/*.css       //忽略css目录下的.css文件
 ```
 
-
 ## 分支管理
 
-``` bash
+```bash
 # 列出分支,无参数时会列出本地分支
 git branch
 # 创建分支
@@ -195,7 +188,7 @@ git commit
 
 ## 提交日志
 
-``` bash
+```bash
 # 查看历史提交记录
 git log
 git log --oneline # 历史记录简介版本
@@ -214,7 +207,7 @@ https://git-scm.com/docs/git-log
 
 当项目到达一个重要阶段，希望永远标记这个提交快照，可以使用git tag 给他打上标签；
 
-``` bash
+```bash
 # 打上标签 v1.0,-a 会创建一个带注解的标签,会记录作者和时间
 git tag -a v1.0 -m "版本1.0的标签"
 
@@ -241,7 +234,7 @@ ssh-keygen  -t rsa –C “youselfemail@email.com”
 
 1. 在github上创建仓库，然后进入创建的仓库Clone or Download;然后通过
 
-``` bash
+```bash
 # 通过该命令将本地仓库和Github仓库连接好
 git remote add origin https://xxxxxxxxxxxxxx
 ```

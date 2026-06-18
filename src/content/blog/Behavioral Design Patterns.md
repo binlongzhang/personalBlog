@@ -3,7 +3,7 @@ title: 'Behavioral Pattern'
 pubDate: 2023-05-03
 description: '行为型设计模式概览'
 author: 'binlong Zhang'
-tags: ["Design Pattern", "行为型模式", "设计模式"]
+tags: ["Design Pattern"]
 ---
 # Chain of Resposibility
 

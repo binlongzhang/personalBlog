@@ -3,9 +3,9 @@ title: 'NLP技术演进'
 pubDate: 2021-04-04
 description: '简述NLP技术近年来技术演进'
 author: 'binlong Zhang'
-tags: ["NLP", "技术演进", "深度学习"]
+tags: ["NLP", "深度学习"]
 ---
-> description: '简述NLP技术近年来技术演进'
+> 简述NLP技术近年来技术演进
 
 # Basic
 
@@ -27,21 +27,18 @@ N-gram、HMM、CRF、SVM、LSTM+CRF
 
 **jieba分词的框架图**
 
-
 ![image](NLP技术演进/3.jpg)
 
 ## Word Embedding
 
 1. **First**,represent words using one-hot vectors.
-
-1. 1. Suppose the dictionary contain V unique words;
+2. 1. Suppose the dictionary contain V unique words;
    2. then the one-hot vectors ![img](https://cdn.nlark.com/yuque/__latex/f4b3b6c1c603e6ffb626b2e6effa689a.svg) are v-dimensional;
 
 ![image.png](NLP技术演进/4.png)
 
 1. **second**,map the one-hot vectors to low-dimensional vectors
-
-1. 1. P is parameter matrix which can be **learned from training data;**
+2. 1. P is parameter matrix which can be **learned from training data;**
    2. ![img](https://cdn.nlark.com/yuque/__latex/8dec559e201a7b6a0f99baeaa1731051.svg)is the one-hot vector of the i-th word in dictonary;
 
 **How to interpret the parameter matrix?**
@@ -53,7 +50,6 @@ N-gram、HMM、CRF、SVM、LSTM+CRF
 ### Model
 
 > 无监督训练**word2vec**的两种模型：CBOW和skip-gram
-
 
 ![14.png](NLP技术演进/7.png)
 
@@ -81,7 +77,7 @@ N-gram、HMM、CRF、SVM、LSTM+CRF
 
 仅仅是利用词的统计和频率分类，没有考虑序列；
 
-# RNN(Recurrent Neural Networks) 
+# RNN(Recurrent Neural Networks)
 
 > using RNN to instead simple Classification
 
@@ -134,7 +130,7 @@ N-gram、HMM、CRF、SVM、LSTM+CRF
 
 ![image.png](NLP技术演进/19.png)
 
-### Pretraining 
+### Pretraining
 
 ![image.png](NLP技术演进/20.png)
 
@@ -151,11 +147,11 @@ How to Improve?
 
 # Attention
 
->  Bahdanau,Cho,& Bengio. Neural	machine	translation by jointly learning to align and translate. In ICLR, 2015.
+> Bahdanau,Cho,& Bengio. Neural	machine	translation by jointly learning to align and translate. In ICLR, 2015.
 
-- Attention tremendously improves Seq2Seq model. 
-- With attention, Seq2Seq model does not forget source input. 
-- With attention, the decoder knows where to focus. 
+- Attention tremendously improves Seq2Seq model.
+- With attention, Seq2Seq model does not forget source input.
+- With attention, the decoder knows where to focus.
 - Downside: much more computation.
 
 ![image.png](NLP技术演进/22.png)
@@ -167,7 +163,6 @@ How to Improve?
 ![image.png](NLP技术演进/24.png)
 
 ![image.png](NLP技术演进/25.png)
-
 
 ![image.png](NLP技术演进/26.png)
 
@@ -184,7 +179,6 @@ How to Improve?
 ![image.png](NLP技术演进/30.png)
 
 ![image.png](NLP技术演进/31.png)
-
 
 # Attention to seq2seq
 
@@ -235,7 +229,6 @@ How to Improve?
 
 ![image.png](NLP技术演进/45.png)
 
-
 - Transformer is Seq2Seq model; it has an encoder and a decoder.
 - Transformer model is not RNN.
 - Transformer is based on attention and self-attention.
@@ -244,7 +237,6 @@ How to Improve?
 ## BERT(Bidirectional Encoder Representationsfrom Transformers)
 
 > 1. Devlin, Chang, Lee, and Toutanova. BERT: Pre-training of deep bidirectional transformers for language understanding. In ACL, 2019.
->
 > 2. Vaswani and others. Attention is all you need. In NIPS, 2017.
 
 **Main:**

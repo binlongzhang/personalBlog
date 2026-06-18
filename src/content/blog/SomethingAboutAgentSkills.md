@@ -3,7 +3,7 @@ title: 'Something about Agent Skills'
 pubDate: 2026-02-05
 description: 'Agent Skills调研总结'
 author: 'binlong Zhang'
-tags: ["Anthropic", "LLM Engineering", "AI Coding", "Agent", "Agent Skills"]
+tags: ["Anthropic", "LLM Engineering", "AI Coding", "Agent"]
 ---
 > 近期调研了 Anthropic 推出的 Agent Skills 功能，将调研内容整理分享。
 
@@ -132,7 +132,7 @@ Show concrete examples of using this Skill.
 >
 > [https://github.com/anthropics/skills/tree/main/skills](https://github.com/anthropics/skills/tree/main/skills)
 
-<u>其中 **skill-creator** 尤其值得注意，其一只脚已经迈入了 **Self-Evolving**</u>
+`<u>`其中 **skill-creator** 尤其值得注意，其一只脚已经迈入了 **Self-Evolving**`</u>`
 
 > 关于 Self-Evolving AI Agent 感兴趣的可阅读：
 >
@@ -142,23 +142,20 @@ Show concrete examples of using this Skill.
 >
 > Coze 对其也进行了跟进，且水准很高。后续子标题会详细介绍
 
-
-
 #### Claude Family
 
 ##### Claude.ai
-> [https://www.youtube.com/watch?v=IoqpBKrNaZI&feature=youtu.be](https://www.youtube.com/watch?v=IoqpBKrNaZI&feature=youtu.be)
 
+> [https://www.youtube.com/watch?v=IoqpBKrNaZI&amp;feature=youtu.be](https://www.youtube.com/watch?v=IoqpBKrNaZI&feature=youtu.be)
 
 Both pre-built Agent Skills and custom Skills:
 
 - **Pre-built Agent Skills**: These Skills are already working **behind the scenes when you create documents**. Claude uses them without requiring any setup.
 - **Custom Skills**: **Upload your own Skills as zip files** through Settings > Features. Available on Pro, Max, Team, and Enterprise plans with code execution enabled. Custom Skills are individual to each user; they are not shared organization-wide and cannot be centrally managed by admins.
 
-
 ##### Claude Code
 
-- Only Custom Skills. 
+- Only Custom Skills.
 - Filesystem-based and don't require API uploads.
 
 | 类型            | 使用方式             |
@@ -171,13 +168,12 @@ Both pre-built Agent Skills and custom Skills:
 >
 > [https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md#213](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md#213)
 
-
-
 ##### Claude API
+
 ![Claude.ai Skills](./SomethingAboutAgentSkills/claude-ai.png)
 
 - Both pre-built Agent Skills and custom Skills.
-    - Specify the relevant `skill_id` in the `container` parameter along with the code execution tool.
+  - Specify the relevant `skill_id` in the `container` parameter along with the code execution tool.
 
 ```python
 import anthropic
@@ -229,14 +225,13 @@ for file_id in extract_file_ids(response):
 ```
 
 - 请求限制
-    - 每次请求最大skills数 = 8
-    - 上传skill最大尺寸8MB
-    - YAML格式限制(略)
+  - 每次请求最大skills数 = 8
+  - 上传skill最大尺寸8MB
+  - YAML格式限制(略)
 - 执行容器限制
-    - 禁止网路通信
-    - 无运行时安装包
-    - 每次请求刷新容器
-
+  - 禁止网路通信
+  - 无运行时安装包
+  - 每次请求刷新容器
 
 ##### Claude Agent SDK
 
@@ -271,30 +266,30 @@ async def main():
 asyncio.run(main())
 ```
 
-
 #### OpenClaw
 
 > [https://openclaw.ai/](https://openclaw.ai/)
 >
 > 支持，并大量应用 Skills：
-> 
+>
 > [https://github.com/openclaw/openclaw/tree/main/skills](https://github.com/openclaw/openclaw/tree/main/skills)
-
 
 *生效/覆盖策略*
 
 | 模式                 | 来源                                                    | 优先级(命名冲突覆盖) |
 | -------------------- | ------------------------------------------------------- | -------------------- |
 | Bundled skills       | shipped with the install                                | 低                   |
-| Managed/local skills | `~/.openclaw/skills`                                | 中                    |
+| Managed/local skills | `~/.openclaw/skills`                                  | 中                   |
 | Workspace skills     | `<workspace>/skills`                                  | 高                   |
 | Extra skills         | `~/.openclaw/openclaw.json` `skills.load.extraDirs` | 低                   |
 
 多 agent 场景
+
 - 每个 agent 有其 workspace，其中的 skill 为 agent 独占
 - 多 agent 可采用 `extraDirs` 和 `ManagedSkill` 实现共享
 
 **格式/兼容性/特性**
+
 - 跟随 AgentSkills 的 spec
 - 其解析器支持 skill 装载时过滤
 
@@ -320,6 +315,7 @@ metadata: {
 > [https://github.com/openclaw/openclaw/tree/main/skills/skill-creator](https://github.com/openclaw/openclaw/tree/main/skills/skill-creator)
 
 *项目结构*
+
 ```bash
 skill-creator/
 ├── scripts/
@@ -331,6 +327,7 @@ skill-creator/
 ```
 
 *SKILL.md 核心内容*
+
 ```yaml
 ---
 name: skill-creator
@@ -367,8 +364,6 @@ After testing the skill, users may request improvements. Often this happens righ
 
 提供公共 skills 托管注册平台： [clawhub](https://www.clawhub.com/) & clawhub CLI
 
-
-
 #### Coze
 
 > [https://www.coze.cn/](https://www.coze.cn/)
@@ -376,12 +371,9 @@ After testing the skill, users may request improvements. Often this happens righ
 调用
 ![Coze Skills](./SomethingAboutAgentSkills/coze.png)
 
-
 管理
 ![Coze Skill mngr](./SomethingAboutAgentSkills/coze-skill-mngr.png)
 ![Coze Skill entrance](./SomethingAboutAgentSkills/coze-skill-entrance.png)
-
-
 
 > [https://code.coze.cn/home?from=coze_skill/](https://code.coze.cn/home?from=coze_skill/)
 > ![Coze Skill ffmpeg](./SomethingAboutAgentSkills/coze-ffmpeg-skills.png)
@@ -392,9 +384,11 @@ After testing the skill, users may request improvements. Often this happens righ
 
 - 率先在记忆系统中引入 skill
 - 将结构化记忆封装/转化为 Skill，为记忆在 LLM 中的拼接/使用提供了一个思路
+
 > **当前 LLM 外挂记忆系统存在痛点**：概念太多，dev 理解成本很高，合理使用难度大
 >
 > 其通过将记忆直接封装为 skill（直接固化记忆的使用模式）从而降低使用成本
+
 - 某种意义上实现了 Claude 规划的自动评估/进化的 skill
 
 ![memOS Skill memory](./SomethingAboutAgentSkills/mem-os-progress.png)
@@ -416,6 +410,7 @@ data = {
 ```
 
 MemOS 接收到请求后，会依次完成以下处理，生成技能（Skill）文件：
+
 - **智能切片**：识别历史对话中的任务边界，**切分出任务文本块**
 - **聚类提取**：将**同类型的任务文本块聚类**，结合用户的历史记忆，**提取出结构化的技能文本**
 - **技能转化**：将技能文本**转化为可运行、可被识别的 Skill 文件**
@@ -425,6 +420,7 @@ MemOS 接收到请求后，会依次完成以下处理，生成技能（Skill）
 > 以上为 memOS 当前支持的模型列表，不一定 skill 采用的模型就在列表中，但八九不离十。
 >
 > 通用的 case，官网 demo 和实际跑出的不一致，可能是
+>
 > - 为吞吐在效果上有所牺牲
 > - demo 仅为了说明
 > - 不同级别用户提供不同效果。
@@ -525,12 +521,11 @@ data = {
 ![Skill Spring AI](./SomethingAboutAgentSkills/spring-AI-skill.png)
 
 **Skill 市场/平台：**
-  - [https://skillsmp.com/](https://skillsmp.com/)
+
+- [https://skillsmp.com/](https://skillsmp.com/)
   ![Skill Market](./SomethingAboutAgentSkills/skill-market.png)
-  - [https://www.agentskillsmarket.space/](https://www.agentskillsmarket.space/)
-  - [https://www.clawhub.com/](https://www.clawhub.com/)
-
-
+- [https://www.agentskillsmarket.space/](https://www.agentskillsmarket.space/)
+- [https://www.clawhub.com/](https://www.clawhub.com/)
 
 # Agent Skills 工作原理
 
@@ -541,38 +536,37 @@ data = {
 **Progressive disclosure context**
 
 - Level 1: Metadata (always loaded in system prompt)
-    ```yaml
-    ---
-    name: pdf-processing
-    description: Extract text and tables from PDF files, fill forms, merge documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction.
-    ---
-    ```
+  ```yaml
+  ---
+  name: pdf-processing
+  description: Extract text and tables from PDF files, fill forms, merge documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction.
+  ---
+  ```
 - Level 2: Instructions (loaded when triggered)
-    ```python
-    # PDF Processing
+  ```python
+  # PDF Processing
 
-    ## Quick start
+  ## Quick start
 
-    Use pdfplumber to extract text from PDFs:
+  Use pdfplumber to extract text from PDFs:
 
-    import pdfplumber
+  import pdfplumber
 
-    with pdfplumber.open("document.pdf") as pdf:
-        text = pdf.pages[0].extract_text()
+  with pdfplumber.open("document.pdf") as pdf:
+      text = pdf.pages[0].extract_text()
 
 
-    For advanced form filling, see [FORMS.md](FORMS.md).
-    ```
+  For advanced form filling, see [FORMS.md](FORMS.md).
+  ```
 - Level 3: Resources and code (loaded as needed)
-    ``` bash
-    pdf-skill/
-    ├── SKILL.md (main instructions)
-    ├── FORMS.md (form-filling guide)
-    ├── REFERENCE.md (detailed API reference)
-    └── scripts/
-        └── fill_form.py (utility script)
-    ```
-
+  ```bash
+  pdf-skill/
+  ├── SKILL.md (main instructions)
+  ├── FORMS.md (form-filling guide)
+  ├── REFERENCE.md (detailed API reference)
+  └── scripts/
+      └── fill_form.py (utility script)
+  ```
 
 | Level                 | When Loaded             | Token Cost            | Content                                                               |
 | --------------------- | ----------------------- | --------------------- | --------------------------------------------------------------------- |
@@ -583,48 +577,58 @@ data = {
 ![Context Loading](./SomethingAboutAgentSkills/context-loading.png)
 ![agent-skills-workflow](./SomethingAboutAgentSkills/agent-skills-workflow.png)
 
-
 # 关于 Agent Skills 一些想法
 
 ## Q&A
 
 1. MCP(尤其针对 Prompt 和 Tool) 与 Agent Skills 什么关系？
-    - 二者诞生方式、环境相似
-    - **官方说法**：MCP 负责执行，Agent Skills 负责指导调度
-    - **功能上**二者并非绝对互斥，但从应用/逻辑层可以将二者隔离开
-    - MCP 号称模型上下文协议，在其推出和发展过程中逐渐变成了模型上下文**交互**协议，而 Agent Skills 更像是模型上下文**指挥**协议
+
+   - 二者诞生方式、环境相似
+   - **官方说法**：MCP 负责执行，Agent Skills 负责指导调度
+   - **功能上**二者并非绝对互斥，但从应用/逻辑层可以将二者隔离开
+   - MCP 号称模型上下文协议，在其推出和发展过程中逐渐变成了模型上下文**交互**协议，而 Agent Skills 更像是模型上下文**指挥**协议
 2. 如何看待**Agent Skills**与**LLM**记忆的关系？**
-    - 可以认为是一种基于过程知识的记忆
-    > Skills extend Claude's capabilities by packaging your expertise into composable resources for Claude
-    - 目前更多基于先验/实验设计 Skill，手动写入系统
-    - 后期有做成全自动化的想法，且大概率已经在初步尝试
-    > Looking further ahead, we hope to enable agents to create, edit, and evaluate Skills on their own, letting them codify their own patterns of behavior into reusable capabilities.
-    >
-    > [https://youtu.be/kS1MJFZWMq4](https://youtu.be/kS1MJFZWMq4)
+
+   - 可以认为是一种基于过程知识的记忆
+
+   > Skills extend Claude's capabilities by packaging your expertise into composable resources for Claude
+   >
+
+   - 目前更多基于先验/实验设计 Skill，手动写入系统
+   - 后期有做成全自动化的想法，且大概率已经在初步尝试
+
+   > Looking further ahead, we hope to enable agents to create, edit, and evaluate Skills on their own, letting them codify their own patterns of behavior into reusable capabilities.
+   >
+   > [https://youtu.be/kS1MJFZWMq4](https://youtu.be/kS1MJFZWMq4)
+   >
 3. **为什么 Anthropic 要推 Agent Skill？**
+
    1. 代码场景中派生出来的抽象，和 MCP 相似，觉得不错就往外推了
    2. 缓解 MCP 设计时候忽略的工具/上下文爆炸问题
-        > - 相较于 MCP 的宣传，Skill 着重强调了 **Token 消耗**
-        > - 理论上 MCP 也能实现类似 Skill 的功能，其可以扩展 Prompt 规范和使用指导给 McpServer 补充新的功能
-        > - 但其没有在 MCP 上补全，而是选择新开标准，可能因为：
-        >    - 功能上二者并非互斥，但从应用/逻辑层可以将二者隔离开
-        >    - **所有人都需要新概念**
-        >    - 不愿承认 MCP 设计不完善
-    4. 为**自进化 Agent** 铺路（感觉 Agent 一直是 Claude 的优势和发力点）
-    5. 所有人都需要新概念，把盘子做大
+      > - 相较于 MCP 的宣传，Skill 着重强调了 **Token 消耗**
+      > - 理论上 MCP 也能实现类似 Skill 的功能，其可以扩展 Prompt 规范和使用指导给 McpServer 补充新的功能
+      > - 但其没有在 MCP 上补全，而是选择新开标准，可能因为：
+      >   - 功能上二者并非互斥，但从应用/逻辑层可以将二者隔离开
+      >   - **所有人都需要新概念**
+      >   - 不愿承认 MCP 设计不完善
+      >
+   3. 为**自进化 Agent** 铺路（感觉 Agent 一直是 Claude 的优势和发力点）
+   4. 所有人都需要新概念，把盘子做大
 4. 如何看待观点**"Skill 是 Claude 不愿承认其 MCP 设计缺陷的产物"**
-    - 有一定的道理，但尚无法定论
-    - 相较于 MCP 的宣传，Skill 确实着重强调了 Token 消耗
-    - 功能层面 MCP 确实具备覆盖 Skill 功能的能力
-    - 但也不排除其在为自进化 Agent 铺路（感觉 Agent 一直是 Claude 的优势和发力点）
-5. 如何看待各公众号常见标题 **"不要搞 agent 了，现在流行 skills", "no Agent, Skill Now"**
-    - **完全错误，标题党**，二者不是一个层面的东西（这种标题的公众号建议直接拉黑，以免以后看到浪费时间）
-    - agent 的开发是完整的系统工程（重量级），相比之下 skill 更轻量级的增强（插件）
-    - agent 通常是领域/方向级的，而 skill 更多是任务级
-6. 如何看待观点 **"skill 可能会和 mcp 一样，开发者远大于使用者，造出一大堆没人用的轮子"**
-    - 从个性化（针对个人/企业/组织）的角度，只要能复用就有价值
-    - 从复用比例角度，skills 的成本更低，因此复用比例大概率比 mcp 更低
 
+   - 有一定的道理，但尚无法定论
+   - 相较于 MCP 的宣传，Skill 确实着重强调了 Token 消耗
+   - 功能层面 MCP 确实具备覆盖 Skill 功能的能力
+   - 但也不排除其在为自进化 Agent 铺路（感觉 Agent 一直是 Claude 的优势和发力点）
+5. 如何看待各公众号常见标题 **"不要搞 agent 了，现在流行 skills", "no Agent, Skill Now"**
+
+   - **完全错误，标题党**，二者不是一个层面的东西（这种标题的公众号建议直接拉黑，以免以后看到浪费时间）
+   - agent 的开发是完整的系统工程（重量级），相比之下 skill 更轻量级的增强（插件）
+   - agent 通常是领域/方向级的，而 skill 更多是任务级
+6. 如何看待观点 **"skill 可能会和 mcp 一样，开发者远大于使用者，造出一大堆没人用的轮子"**
+
+   - 从个性化（针对个人/企业/组织）的角度，只要能复用就有价值
+   - 从复用比例角度，skills 的成本更低，因此复用比例大概率比 mcp 更低
 
 ## Conclusion
 
@@ -633,18 +637,19 @@ data = {
   - 贴合其 Code can do Everything 理念
   - 基于文件系统的存储形式，简单但也直接继承其的优越性，很符合程序员思维模式
     > 最初应该是Cluade的特色(记忆、插件等都在用该方案)？现已经被很多Agent沿用
+    >
   - 与 MCP 感觉类似，像是从 Coding 场景中派生出的抽象
 - 相较于 Agent，Skills 更像是**轻量级的工具/workflow**
 - 暂无法确定是中间产物还是最终形态（个人比较倾向于前者）
 
-
-
 ## Viewpoint
 
 - 单纯跟支持 skill 并不难，难的是将相关组件完善，让其真正能用、好用（包括 exec sandbox、Skill Creator 等）
-    > Skill Creater就不用说了，而执行沙盒即便Claude现阶段也还存在很多限制(估计主要是安全方面，顺带一提，目前mcp实际在安全层面也有很多待完善的点)
+  > Skill Creater就不用说了，而执行沙盒即便Claude现阶段也还存在很多限制(估计主要是安全方面，顺带一提，目前mcp实际在安全层面也有很多待完善的点)
+  >
 - 技术积累/产品爆发是没有捷径可走的，所有偷的"懒"都会成为将来的"债"
-    > 比如，如若没有llm Coding的积累，skill Creater想做好不是一件容易的事
+  > 比如，如若没有llm Coding的积累，skill Creater想做好不是一件容易的事
+  >
 - AI/LLM 肉眼可见的带来了一大波行业制定行业标准/规则的机会
 - 目前 LLM 相关赛道产物，突出一个"**绝对快，相对准**"。只要提出想法，就会有人帮你实现/创造应用场景
 - LLM 的卷也促使头部厂形成了不同 style 分化（claude-编程，google-多模，deepseek-数学/工程），跟进/创新需要思路明确，全跟是不太现实的

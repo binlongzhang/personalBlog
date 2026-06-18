@@ -3,7 +3,7 @@ title: 'GDB'
 pubDate: 2021-04-04
 description: 'GDB使用'
 author: 'binlong Zhang'
-tags: ["GDB", "tools", "C/C++", "调试"]
+tags: ["tools"]
 ---
 GDB（GNU Debugger）是GCC的调试工具
 

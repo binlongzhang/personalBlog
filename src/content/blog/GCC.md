@@ -3,7 +3,7 @@ title: 'GCC'
 pubDate: 2021-04-04
 description: 'GCC命令记录'
 author: 'binlong Zhang'
-tags: ["GCC", "tools", "C/C++", "编译"]
+tags: ["tools"]
 ---
 # 工作流程
 

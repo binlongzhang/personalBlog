@@ -3,7 +3,7 @@ title: 'Creational Pattern'
 pubDate: 2023-05-01
 description: '创建型设计模式概览'
 author: 'binlong Zhang'
-tags: ["Design Pattern", "创建型模式", "设计模式"]
+tags: ["Design Pattern"]
 ---
 # Simple Factory
 

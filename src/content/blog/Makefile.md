@@ -3,7 +3,7 @@ title: 'Makefile'
 pubDate: 2022-04-04
 description: '简要介绍 Makefile 的用法和常见命令'
 author: 'binlong Zhang'
-tags: ["Makefile", "tools", "C/C++", "构建"]
+tags: ["tools"]
 ---
 # 基本规则
 
