@@ -13,11 +13,18 @@ export const getStaticPaths = (async ({ paginate }) => {
 		(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 	);
 	// 注意：getStaticPaths 在隔离上下文执行，pageSize 直接内联（不能引用模块级常量）
-	return paginate(posts, { pageSize: 7 });
+	return paginate(posts, { pageSize: 8 });
 }) satisfies GetStaticPaths;
 
 type Props = { page: Page<CollectionEntry<'blog'>> };
 const { page } = Astro.props;
+
+// 全部文章中出现过的年份（降序、去重），用于左侧筛选栏。
+// 注意：分页 props 只携带当前页，所以这里再取一次集合算全量年份。
+const allPosts = await getCollection('blog');
+const allYears = Array.from(
+	new Set(allPosts.map((p) => p.data.pubDate.getFullYear())),
+).sort((a, b) => b - a);
 ---
 
 <!doctype html>
@@ -26,8 +33,53 @@ const { page } = Astro.props;
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
 			main {
-				width: 60%;
+				width: 70%;
 				max-width: calc(100% - 2em);
+				display: grid;
+				grid-template-columns: 7rem 1fr;
+				gap: 2.5rem;
+				align-items: start;
+			}
+			.year-filter {
+				position: sticky;
+				top: 1.5rem;
+			}
+			.filter-title {
+				margin: 0 0 0.6rem;
+				font-size: 0.85rem;
+				font-weight: 600;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: rgb(var(--gray));
+			}
+			.year-list {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 0.4rem;
+			}
+			.year-chip {
+				width: 100%;
+				padding: 0.35rem 0.7rem;
+				border: 1px solid rgba(var(--gray-light), 0.9);
+				border-radius: 999px;
+				background: transparent;
+				color: rgb(var(--gray));
+				font: inherit;
+				font-size: 0.95rem;
+				text-align: center;
+				cursor: pointer;
+				transition: 0.15s ease;
+			}
+			.year-chip:hover {
+				border-color: rgba(var(--gray), 0.6);
+			}
+			.year-chip.is-active {
+				background: rgb(var(--gray-dark));
+				border-color: rgb(var(--gray-dark));
+				color: #fff;
 			}
 			.post-list {
 				list-style: none;
@@ -35,7 +87,7 @@ const { page } = Astro.props;
 				padding: 0;
 			}
 			.post-list li {
-				padding: 1.5rem 0;
+				padding: 1rem 0;
 				border-bottom: 1px solid rgba(var(--gray-light), 0.9);
 			}
 			.post-list li:first-child {
@@ -102,6 +154,20 @@ const { page } = Astro.props;
 				width: 1px;
 			}
 			@media (max-width: 720px) {
+				main {
+					grid-template-columns: 1fr;
+					gap: 1rem;
+				}
+				.year-filter {
+					position: static;
+				}
+				.year-list {
+					flex-direction: row;
+					flex-wrap: wrap;
+				}
+				.year-chip {
+					width: auto;
+				}
 				.post-list a {
 					grid-template-columns: 1fr auto;
 					gap: 0.2rem 0.8rem;
@@ -122,11 +188,30 @@ const { page } = Astro.props;
 	<body>
 		<Header />
 		<main>
-			<section>
+			<aside class="year-filter" aria-label="按年份筛选">
+				<h2 class="filter-title">年份</h2>
+				<ul class="year-list">
+					{
+						allYears.map((y) => (
+							<li>
+								<button
+									type="button"
+									class="year-chip is-active"
+									data-year={y}
+									aria-pressed="true"
+								>
+									{y}
+								</button>
+							</li>
+						))
+					}
+				</ul>
+			</aside>
+			<section class="post-section">
 				<ul class="post-list">
 					{
 						page.data.map((post) => (
-							<li>
+							<li data-year={post.data.pubDate.getFullYear()}>
 								<a href={`/blog/${post.id}/`}>
 									<h2 class="title">{post.data.title}</h2>
 									{post.data.description && <p class="desc">{post.data.description}</p>}
@@ -165,5 +250,31 @@ const { page } = Astro.props;
 			</section>
 		</main>
 		<Footer />
+
+		<script>
+			// 年份筛选：默认全选；点击切换某年份选中状态，
+			// 选中态显示对应年份的文章，未选中则隐藏（仅作用当前页）。
+			const chips = document.querySelectorAll<HTMLButtonElement>('.year-chip');
+			const items = document.querySelectorAll<HTMLLIElement>('.post-list li');
+			function applyFilter() {
+				const active = new Set<string>();
+				chips.forEach((c) => {
+					if (c.classList.contains('is-active') && c.dataset.year) {
+						active.add(c.dataset.year);
+					}
+				});
+				items.forEach((li) => {
+					const y = li.dataset.year ?? '';
+					li.hidden = !active.has(y);
+				});
+			}
+			chips.forEach((chip) => {
+				chip.addEventListener('click', () => {
+					const on = chip.classList.toggle('is-active');
+					chip.setAttribute('aria-pressed', String(on));
+					applyFilter();
+				});
+			});
+		</script>
 	</body>
 </html>

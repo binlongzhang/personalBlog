@@ -3,7 +3,7 @@ title: 'KNN'
 pubDate: 2020-02-02
 description: 'KNN原理与学习总结'
 author: 'binlong Zhang'
-tags: ["机器学习", "统计学习方法",  "学习笔记"]
+tags: ["机器学习", "统计学习方法"]
 ---
 > k近邻算法：
 >

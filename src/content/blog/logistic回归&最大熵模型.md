@@ -3,7 +3,7 @@ title: 'logistic回归&最大熵模型'
 pubDate: 2020-02-17
 description: '简单总结logistic的基本原理'
 author: 'binlong Zhang'
-tags: ["机器学习", "统计学习方法","学习笔记"]
+tags: ["机器学习", "统计学习方法"]
 ---
 > 介绍 logistic 回归模型，利用最大熵原理来解释 logistic 回归，再从中进一步抽象出更加通用的"最大熵模型"，对最大熵模型进行推导，证明其合理性，并给出具体的使用方法，还会用最大熵模型来推导出 logistic 回归，以此作为最大熵模型示例
 
