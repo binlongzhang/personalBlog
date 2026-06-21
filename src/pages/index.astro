@@ -1,5 +1,7 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
+import Background from '../components/Background.astro';
+import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import TagGraph from '../components/TagGraph.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
@@ -10,15 +12,17 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
-			html, body { height: 100%; }
+			html, body { height: 100%; margin: 0; }
 			body {
-				background: #f5f7fb;
-				overflow: hidden;
+				display: flex;
+				flex-direction: column;
 			}
 		</style>
 	</head>
 	<body>
+		<Background />
 		<Header />
 		<TagGraph />
+		<Footer />
 	</body>
 </html>

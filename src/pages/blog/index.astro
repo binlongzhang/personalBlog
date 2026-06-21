@@ -1,0 +1,392 @@
+---
+import { getCollection } from 'astro:content';
+import Background from '../../components/Background.astro';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Header from '../../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+
+// 全量文章，按发布时间降序。分页改到客户端按视口高度动态计算，
+// 所以这里一次性把所有文章渲染进页面，再由脚本决定每页显示哪些。
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+// 出现过的年份（降序、去重），用于左侧筛选栏。
+const allYears = Array.from(
+	new Set(posts.map((p) => p.data.pubDate.getFullYear())),
+).sort((a, b) => b - a);
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<style>
+			/* 整页撑满视口：头、主、脚纵向排列，main 吃掉剩余空间 */
+			html,
+			body {
+				height: 100%;
+			}
+			body {
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+			/* 三列网格：左留白 | 文章 | 右留白。
+			   文章居中，年份块落在左侧 1fr 留白的水平中点。 */
+			main {
+				width: 100%;
+				max-width: 100%;
+				flex: 1;
+				display: grid;
+				grid-template-columns: 1fr minmax(0, 50rem) 1fr;
+				gap: 2.5rem;
+				align-items: stretch;
+				padding: 2em 1em;
+				box-sizing: border-box;
+				overflow-y: auto;
+			}
+			.year-filter {
+				/* 整个年份区域在左侧列内水平+垂直居中 */
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+			}
+			.filter-title {
+				margin: 0 0 0.9rem;
+				/* 标题随窗口缩放，比之前更明显 */
+				font-size: clamp(1rem, 1.4vw, 1.4rem);
+				font-weight: 700;
+				letter-spacing: 0.05em;
+				color: rgb(var(--gray-dark));
+				text-align: center;
+			}
+			.year-list {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: clamp(0.4rem, 0.6vw, 0.7rem);
+				/* 紧凑固定宽度，整块在左侧留白里居中，而非撑满整列 */
+				width: clamp(5rem, 8vw, 8rem);
+			}
+			.year-chip {
+				width: 100%;
+				padding: clamp(0.35rem, 0.6vw, 0.6rem) 0.7rem;
+				border: 1px solid rgba(var(--gray-light), 0.9);
+				border-radius: 999px;
+				background: transparent;
+				color: rgb(var(--gray));
+				font: inherit;
+				/* 按钮文字随窗口缩放 */
+				font-size: clamp(0.95rem, 1.1vw, 1.2rem);
+				text-align: center;
+				cursor: pointer;
+				transition: 0.15s ease;
+			}
+			.year-chip:hover {
+				border-color: rgba(var(--gray), 0.6);
+			}
+			.year-chip.is-active {
+				background: rgb(var(--gray-dark));
+				border-color: rgb(var(--gray-dark));
+				color: #fff;
+			}
+			/* 右侧内容列：列表占满剩余高度，分页固定在底部 */
+			.post-section {
+				display: flex;
+				flex-direction: column;
+				min-height: 0;
+			}
+			.post-list {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				flex: 1;
+			}
+			.post-list li {
+				padding: 1rem 0;
+				border-bottom: 1px solid rgba(var(--gray-light), 0.9);
+			}
+			.post-list a {
+				display: grid;
+				grid-template-columns: 4.5fr 4.5fr 1fr;
+				align-items: center;
+				gap: 0.3rem 1.2rem;
+				text-decoration: none;
+				transition: 0.2s ease;
+			}
+			.title {
+				grid-column: 1;
+				margin: 0;
+				color: rgb(var(--black));
+				font-size: 1.2rem;
+				line-height: 1.35;
+				overflow-wrap: break-word;
+			}
+			.desc {
+				grid-column: 2;
+				min-width: 0;
+				margin: 0;
+				color: rgb(var(--gray-dark));
+				font-size: 0.9rem;
+				line-height: 1.5;
+				overflow-wrap: break-word;
+			}
+			.date {
+				grid-column: 3;
+				margin: 0;
+				text-align: right;
+				color: rgb(var(--gray));
+				font-size: 0.85rem;
+				white-space: nowrap;
+			}
+			.post-list a:hover .title {
+				color: rgb(var(--accent));
+			}
+			.pagination {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-top: 1.5rem;
+				min-height: 2.4rem;
+			}
+			.pagination .page-info {
+				color: rgb(var(--gray));
+				font-size: 0.9rem;
+			}
+			.pagination button {
+				padding: 0.45rem 1rem;
+				border: 1px solid rgba(var(--gray-light), 0.9);
+				border-radius: 8px;
+				background: transparent;
+				font: inherit;
+				color: rgb(var(--accent));
+				cursor: pointer;
+				transition: 0.2s ease;
+			}
+			.pagination button:hover:not(:disabled) {
+				background: rgba(var(--accent-rgb), 0.08);
+			}
+			.pagination button:disabled {
+				color: rgba(var(--gray), 0.5);
+				cursor: default;
+			}
+			@media (max-width: 720px) {
+				body {
+					/* 移动端恢复正常文档流，不强制单屏 */
+					display: block;
+				}
+				main {
+					grid-template-columns: 1fr;
+					gap: 1rem;
+				}
+				.year-filter {
+					align-items: stretch;
+				}
+				.year-list {
+					flex-direction: row;
+					flex-wrap: wrap;
+					width: 100%;
+				}
+				.year-chip {
+					width: auto;
+				}
+				.post-list a {
+					grid-template-columns: 1fr auto;
+					gap: 0.2rem 0.8rem;
+				}
+				.title {
+					grid-column: 1 / -1;
+				}
+				.desc {
+					grid-column: 1;
+				}
+				.date {
+					grid-column: 2;
+					align-self: start;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<Background />
+		<Header />
+		<main>
+			<aside class="year-filter" aria-label="按年份筛选">
+				<h2 class="filter-title">年份</h2>
+				<ul class="year-list">
+					{
+						allYears.map((y) => (
+							<li>
+								<button
+									type="button"
+									class="year-chip is-active"
+									data-year={y}
+									aria-pressed="true"
+								>
+									{y}
+								</button>
+							</li>
+						))
+					}
+				</ul>
+			</aside>
+			<section class="post-section">
+				<ul class="post-list">
+					{
+						posts.map((post) => (
+							<li data-year={post.data.pubDate.getFullYear()}>
+								<a href={`/blog/${post.id}/`}>
+									<h2 class="title">{post.data.title}</h2>
+									{post.data.description && <p class="desc">{post.data.description}</p>}
+									<span class="date">
+										<FormattedDate date={post.data.pubDate} />
+									</span>
+								</a>
+							</li>
+						))
+					}
+				</ul>
+
+				<nav class="pagination" aria-label="Pagination" hidden>
+					<button type="button" class="page-prev">← 上一页</button>
+					<span class="page-info"></span>
+					<button type="button" class="page-next">下一页 →</button>
+				</nav>
+			</section>
+		</main>
+		<Footer />
+
+		<script>
+			// 客户端动态分页：
+			// 1) 年份筛选得到当前可见的文章集合；
+			// 2) 按列表区可用高度，贪心地把文章逐条塞进每页，塞满即翻页；
+			// 3) 视口尺寸变化时重新计算每页条数。
+			const chips =
+				document.querySelectorAll<HTMLButtonElement>('.year-chip');
+			const allItems = Array.from(
+				document.querySelectorAll<HTMLLIElement>('.post-list li'),
+			);
+			const list = document.querySelector<HTMLUListElement>('.post-list')!;
+			const nav = document.querySelector<HTMLElement>('.pagination')!;
+			const info = document.querySelector<HTMLElement>('.page-info')!;
+			const prevBtn = document.querySelector<HTMLButtonElement>('.page-prev')!;
+			const nextBtn = document.querySelector<HTMLButtonElement>('.page-next')!;
+
+			let currentPage = 0;
+			let pages: HTMLLIElement[][] = [];
+
+			function activeYears(): Set<string> {
+				const set = new Set<string>();
+				chips.forEach((c) => {
+					if (c.classList.contains('is-active') && c.dataset.year) {
+						set.add(c.dataset.year);
+					}
+				});
+				return set;
+			}
+
+			// 测量每条目高度：先全部显示，读取 offsetHeight，再据此分页。
+			function buildPages() {
+				const years = activeYears();
+				const eligible = allItems.filter((li) =>
+					years.has(li.dataset.year ?? ''),
+				);
+
+				// 临时全部显示以测量真实高度
+				allItems.forEach((li) => (li.hidden = !eligible.includes(li)));
+
+				// 关键：可用高度只看「浏览器窗口」，不看会被内容撑高的 main 容器。
+				// 列表顶端到视口顶部的距离（header + main padding 等），内容多少都不变
+				const listTop = list.getBoundingClientRect().top;
+				// 临时显示分页控件以量出它连同上边距占用的高度
+				const navWasHidden = nav.hidden;
+				nav.hidden = false;
+				const navStyle = getComputedStyle(nav);
+				const navTotal = nav.offsetHeight + parseFloat(navStyle.marginTop);
+				nav.hidden = navWasHidden;
+				// Footer 高度（加阴影/边距的实际占用）
+				const footer = document.querySelector('footer');
+				const footerHeight = footer ? footer.offsetHeight : 0;
+				// 底部留一点呼吸空间，避免最后一条紧贴窗口下沿
+				const bottomGap = 16;
+				const available =
+					window.innerHeight - listTop - navTotal - footerHeight - bottomGap;
+
+				pages = [];
+				let cur: HTMLLIElement[] = [];
+				let used = 0;
+				for (const li of eligible) {
+					const h = li.offsetHeight;
+					// 当前页已有内容且再加一条会超出，则开启新页
+					if (cur.length > 0 && used + h > available) {
+						pages.push(cur);
+						cur = [];
+						used = 0;
+					}
+					cur.push(li);
+					used += h;
+				}
+				if (cur.length > 0) pages.push(cur);
+				if (pages.length === 0) pages = [[]];
+
+				if (currentPage >= pages.length) currentPage = pages.length - 1;
+				if (currentPage < 0) currentPage = 0;
+			}
+
+			function render() {
+				const visible = new Set(pages[currentPage] ?? []);
+				allItems.forEach((li) => (li.hidden = !visible.has(li)));
+
+				const multi = pages.length > 1;
+				nav.hidden = !multi;
+				if (multi) {
+					info.textContent = `第 ${currentPage + 1} / ${pages.length} 页`;
+					prevBtn.disabled = currentPage === 0;
+					nextBtn.disabled = currentPage === pages.length - 1;
+				}
+			}
+
+			function refresh() {
+				buildPages();
+				render();
+			}
+
+			prevBtn.addEventListener('click', () => {
+				if (currentPage > 0) {
+					currentPage--;
+					render();
+				}
+			});
+			nextBtn.addEventListener('click', () => {
+				if (currentPage < pages.length - 1) {
+					currentPage++;
+					render();
+				}
+			});
+			chips.forEach((chip) => {
+				chip.addEventListener('click', () => {
+					const on = chip.classList.toggle('is-active');
+					chip.setAttribute('aria-pressed', String(on));
+					currentPage = 0;
+					refresh();
+				});
+			});
+
+			// 视口变化时防抖重算
+			let t: ReturnType<typeof setTimeout>;
+			window.addEventListener('resize', () => {
+				clearTimeout(t);
+				t = setTimeout(refresh, 150);
+			});
+
+			refresh();
+		</script>
+	</body>
+</html>

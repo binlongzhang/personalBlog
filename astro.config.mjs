@@ -12,6 +12,9 @@ import rehypeKatex from 'rehype-katex';
 export default defineConfig({
 	site: 'https://binlongzhang.github.io',
 	// base: '/personalBlog',
+	devToolbar: {
+		enabled: false,
+	},
 	integrations: [mdx(), sitemap()],
 	markdown: {
 		processor: unified({

@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
+import Background from '../components/Background.astro';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
@@ -18,10 +19,28 @@ const { title, description, pubDate, updatedDate, heroImage, headings = [] } = A
 	<head>
 		<BaseHead title={title} description={description} />
 		<style>
+			html,
+			body {
+				height: 100%;
+			}
+			body {
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
 			main {
 				width: calc(100% - 2em);
 				max-width: 100%;
 				margin: 0;
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+			}
+			/* 内容块在 main 内垂直居中（短内容居中，长内容正常滚动） */
+			article {
+				margin: auto 0;
+				width: 100%;
 			}
 
 			.hero-image {
@@ -45,6 +64,9 @@ const { title, description, pubDate, updatedDate, heroImage, headings = [] } = A
 				padding: 1em 0;
 				text-align: center;
 				line-height: 1;
+			}
+			.title :global(hr) {
+				display: none;
 			}
 			.title h1 {
 				margin: 0 0 0 0;
@@ -85,6 +107,7 @@ const { title, description, pubDate, updatedDate, heroImage, headings = [] } = A
 	</head>
 
 	<body>
+		<Background />
 		<Header />
 		<TableOfContents headings={headings} />
 		<main>

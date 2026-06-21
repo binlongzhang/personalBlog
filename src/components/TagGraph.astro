@@ -44,69 +44,105 @@ const nodes: Node[] = [...postNodes, ...tagNodes];
 const graphData = { nodes, links };
 ---
 
-<div id="tag-graph" class="graph-canvas">
-	<svg id="tag-graph-svg" aria-label="文章与标签关系图"></svg>
-	<div id="graph-tooltip" class="graph-tooltip" role="tooltip"></div>
-
+<div class="graph-page-container">
 	<div class="graph-hero">
-		<p class="hero-lead"><em>这里散落着我读过、写过、想过的东西</em></p>
-		<p class="hero-aside">随意四处看看，希望能对你有所帮助…</p>
-	</div>
-
-	<div class="graph-toolbar">
-		<input
-			id="graph-search"
-			type="search"
-			placeholder="搜索标签或文章…"
-			autocomplete="off"
-			spellcheck="false"
-		/>
-		<div class="graph-legend" role="group" aria-label="筛选节点类型">
-			<div class="legend-item">
-				<button
-					type="button"
-					class="dot-btn dot-post is-active"
-					data-filter="post"
-					aria-label="切换文章可见"
-					title="点击切换文章"
-				></button>
-				<span class="legend-label">文章</span>
-			</div>
-			<div class="legend-item">
-				<button
-					type="button"
-					class="dot-btn dot-tag is-active"
-					data-filter="tag"
-					aria-label="切换标签可见"
-					title="点击切换标签"
-				></button>
-				<span class="legend-label">标签</span>
-			</div>
-			<button id="graph-reset" type="button" title="重置视图" aria-label="重置视图">
-				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-					<path fill="currentColor" d="M8 3V1L4 4l4 3V5a3 3 0 1 1-3 3H3a5 5 0 1 0 5-5z"/>
-				</svg>
-			</button>
+		<div class="hero-text">
+			<p class="hero-lead"><em>这里散落了我阅读、总结、思考的东西</em></p>
+			<p class="hero-aside">随意四处看看，希望能对你有所帮助…</p>
 		</div>
 	</div>
 
-	<p class="graph-hint">拖拽 · 滚轮缩放 · 点击文章跳转 · 点击标签高亮相关</p>
+	<div id="tag-graph" class="graph-canvas">
+		<svg id="tag-graph-svg" aria-label="文章与标签关系图"></svg>
+		<canvas id="spark-canvas" aria-hidden="true"></canvas>
+		<div id="graph-tooltip" class="graph-tooltip" role="tooltip"></div>
+
+		<div class="graph-toolbar">
+			<input
+				id="graph-search"
+				type="search"
+				placeholder="搜索标签或文章…"
+				autocomplete="off"
+				spellcheck="false"
+			/>
+			<div class="graph-legend" role="group" aria-label="筛选节点类型">
+				<div class="legend-item">
+					<button
+						type="button"
+						class="dot-btn dot-post is-active"
+						data-filter="post"
+						aria-label="切换文章可见"
+						title="点击切换文章"
+					></button>
+					<span class="legend-label">文章</span>
+				</div>
+				<div class="legend-item">
+					<button
+						type="button"
+						class="dot-btn dot-tag is-active"
+						data-filter="tag"
+						aria-label="切换标签可见"
+						title="点击切换标签"
+					></button>
+					<span class="legend-label">标签</span>
+				</div>
+				<button id="graph-reset" type="button" title="重置视图" aria-label="重置视图">
+					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+						<path fill="currentColor" d="M8 3V1L4 4l4 3V5a3 3 0 1 1-3 3H3a5 5 0 1 0 5-5z"/>
+					</svg>
+				</button>
+			</div>
+		</div>
+
+		<p class="graph-hint">拖拽 · 滚轮缩放 · 点击文章跳转 · 点击标签高亮相关</p>
+	</div>
 </div>
 
 <script type="application/json" id="graph-data" set:html={JSON.stringify(graphData)} />
 
 <style>
-	/* 画布占满 Header 下方的整个视口，背景就是页面背景 */
+	/* 整体页面容器：垂直 flex，在 body 的 flex 列布局中自动占满剩余空间 */
+	.graph-page-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex: 1;
+		padding: 1.5rem 0;
+		box-sizing: border-box;
+		min-height: 0;
+	}
+
+	/* 欢迎语容器：在页面中居中 */
+	.graph-hero {
+		flex-shrink: 0;
+		width: 100%;
+		max-width: min(90vw, 1600px);
+		margin-bottom: 1.5rem;
+		padding: 0;
+		animation: hero-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+		font-family: Georgia, 'Songti SC', 'STSong', serif;
+		display: flex;
+		justify-content: center;
+	}
+	/* 两句话的容器：用 grid 布局，第二句从第一句约 30% 位置开始 */
+	.hero-text {
+		display: grid;
+		grid-template-columns: 3fr 7fr;
+	}
+
+	/* 画布：占剩余空间,带边框 */
 	.graph-canvas {
-		position: fixed;
-		left: 0;
-		right: 0;
-		top: var(--graph-top, 64px);
-		bottom: 0;
-		background:
-			radial-gradient(circle at 1px 1px, rgba(var(--gray-light), 0.7) 1px, transparent 0)
-			0 0 / 28px 28px,
-			linear-gradient(180deg, #fafbff 0%, #f5f7fb 100%);
+		flex: 1;
+		width: 100%;
+		max-width: min(90vw, 1600px);
+		margin: 0 auto 2rem;
+		border: 2px solid rgba(120, 120, 120, 0.3);
+		border-radius: 8px;
+		position: relative;
+		overflow: hidden;
+		/* 半透明：透出全站着色器背景 */
+		background: rgba(250, 251, 255, 0.5);
+		backdrop-filter: blur(2px);
 	}
 	#tag-graph-svg {
 		width: 100%;
@@ -116,29 +152,33 @@ const graphData = { nodes, links };
 	}
 	#tag-graph-svg:active { cursor: grabbing; }
 
-	/* 欢迎语，浮在画布上方居中，不阻挡拖拽 */
-	.graph-hero {
+	/* Canvas 覆盖在 SVG 之上，渲染风线 */
+	#spark-canvas {
 		position: absolute;
-		top: 4.5%;
-		left: 50%;
-		transform: translateX(-50%);
-		text-align: left;
+		inset: 0;
+		width: 100%;
+		height: 100%;
 		pointer-events: none;
-		max-width: min(90%, 40rem);
-		z-index: 3;
-		animation: hero-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
-		font-family: Georgia, 'Songti SC', 'STSong', serif;
-		font-style: italic;
+		z-index: 2;
 	}
+
 	.graph-hero p {
 		margin: 0;
 		font-size: clamp(1rem, 1.4vw, 1.35rem);
 		color: #c2823c;
 		line-height: 1.9;
 		letter-spacing: 0.05em;
+		white-space: nowrap;
 	}
+	/* 第一句：占满两列 */
+	.hero-lead {
+		grid-column: 1 / 3;
+	}
+	/* 第二句：从第二列开始（第一句的 50% 位置） */
 	.hero-aside {
-		padding-left: 2.6em;
+		font-style: italic;
+		font-weight: 600;
+		grid-column: 2 / 3;
 	}
 	.graph-hero em {
 		font-style: italic;
@@ -147,8 +187,8 @@ const graphData = { nodes, links };
 		white-space: nowrap;
 	}
 	@keyframes hero-in {
-		from { opacity: 0; transform: translate(-50%, -0.6rem); }
-		to { opacity: 1; transform: translate(-50%, 0); }
+		from { opacity: 0; transform: translateY(-0.6rem); }
+		to { opacity: 1; transform: translateY(0); }
 	}
 
 	/* 浮动工具栏：右上角胶囊条，不再占据文档流 */
@@ -216,8 +256,8 @@ const graphData = { nodes, links };
 		border-color: rgba(255, 255, 255, 0.95);
 		box-shadow: 0 0 0 2px currentColor, 0 1px 3px rgba(0, 0, 0, 0.2);
 	}
-	.dot-btn.dot-post { background: #6b7280; color: rgba(107, 114, 128, 0.45); }
-	.dot-btn.dot-tag { background: #c2823c; color: rgba(194, 130, 60, 0.45); }
+	.dot-btn.dot-post { background: #c2823c; color: rgba(194, 130, 60, 0.45); }
+	.dot-btn.dot-tag { background: #4f46b5; color: rgba(79, 70, 181, 0.45); }
 	#graph-reset {
 		display: inline-flex;
 		align-items: center;
@@ -290,7 +330,6 @@ const graphData = { nodes, links };
 		document.documentElement.style.setProperty('--graph-top', `${h}px`);
 	};
 	setGraphTop();
-	window.addEventListener('resize', setGraphTop);
 
 	type GNode = {
 		id: string;
@@ -311,18 +350,110 @@ const graphData = { nodes, links };
 	const svgEl = document.getElementById('tag-graph-svg') as SVGSVGElement | null;
 	const containerEl = document.getElementById('tag-graph');
 	const tooltipEl = document.getElementById('graph-tooltip');
-	if (!svgEl || !containerEl || !tooltipEl) throw new Error('graph dom missing');
+	const sparkEl = document.getElementById('spark-canvas') as HTMLCanvasElement | null;
+	if (!svgEl || !containerEl || !tooltipEl || !sparkEl) throw new Error('graph dom missing');
 
 	const svg = d3.select(svgEl);
 	const tooltip = d3.select(tooltipEl);
+	const spark = sparkEl;
+	const sparkCtx = spark.getContext('2d')!;
 
+	// viewBox 跟着容器尺寸走，但 preserveAspectRatio 让内容等比缩放不变形。
 	let width = containerEl.clientWidth;
 	let height = containerEl.clientHeight;
-	svg.attr('viewBox', `0 0 ${width} ${height}`);
+	svg
+		.attr('viewBox', `0 0 ${width} ${height}`)
+		.attr('preserveAspectRatio', 'xMidYMid meet');
 
 	const root = svg.append('g').attr('class', 'graph-root');
 	const linkLayer = root.append('g').attr('class', 'links');
 	const nodeLayer = root.append('g').attr('class', 'nodes');
+
+	// zoom & pan（提前定义，供 updateSize 使用）
+	const INITIAL_SCALE = 1.1; // 降低初始放大，减少边缘裁剪
+	// 当前 zoom 变换，风线层据此把节点模拟坐标映射到屏幕像素
+	let curTransform = d3.zoomIdentity;
+	const zoom = d3.zoom<SVGSVGElement, unknown>()
+		.scaleExtent([0.15, 4])
+		.on('zoom', (event) => {
+			curTransform = event.transform;
+			root.attr('transform', event.transform.toString());
+		});
+	svg.call(zoom as any);
+
+	function setInitialZoom(duration = 0) {
+		const k = INITIAL_SCALE;
+		const t = d3.zoomIdentity
+			.translate((width * (1 - k)) / 2, (height * (1 - k)) / 2)
+			.scale(k);
+		const sel = duration > 0 ? svg.transition().duration(duration) : svg;
+		(sel as any).call(zoom.transform, t);
+	}
+
+	// 根据画布尺寸算力的缩放系数：以 1200×800 为基准，画布越大节点铺得越开、斥力越强
+	// 根据画布尺寸算力的缩放系数：以 1200×800 为基准，画布越大节点铺得越开、斥力越强
+	function forceScale() {
+		return Math.sqrt((width * height) / (1200 * 800));
+	}
+	// 把引力(连线距离)和斥力(charge)按画布尺寸重新设置；center/x/y 也随尺寸居中
+	function applyForces() {
+		// distance 函数在每次力计算时调用，所以让它动态读取 forceScale()
+		(simulation.force('link') as any)
+			.distance((l: GLink) => {
+				const a = l.source as GNode, b = l.target as GNode;
+				const s = forceScale();
+				// 注意：所有边都是 文章→标签（异类），同类分支是死代码。
+				// 相连节点（文章贴标签）距离要短，让一簇抱紧；
+				// 不同簇之间的分离靠下面的 charge 斥力，不靠连线长度。
+				if (a.type === b.type) {
+					return 10 * s;
+				} else {
+					return 45 * s;
+				}
+			})
+			.strength((l: GLink) => {
+				const a = l.source as GNode, b = l.target as GNode;
+				// 簇内引力更强(0.8)，簇间正常(0.45)
+				return a.type === b.type ? 0.8 : 0.45;
+			});
+		const s = forceScale();
+		(simulation.force('charge') as any)
+			.strength(-900 * s)
+			.distanceMax(800 * s);
+		simulation.force('center', d3.forceCenter(width / 2, height / 2));
+		// 向心力加强，防止节点溢出画布
+		simulation.force('x', d3.forceX(width / 2).strength(0.15));
+		simulation.force('y', d3.forceY(height / 2).strength(0.25));
+	}
+
+	// 让风线 canvas 适配容器尺寸与设备像素比
+	function resizeSpark() {
+		const dpr = Math.min(2, window.devicePixelRatio || 1);
+		spark.width = width * dpr;
+		spark.height = height * dpr;
+		sparkCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+	}
+
+	// 统一的尺寸更新函数
+	function updateSize() {
+		// 先更新 --graph-top（可能影响容器高度），然后在下一帧测量容器尺寸
+		setGraphTop();
+		requestAnimationFrame(() => {
+			const newWidth = containerEl!.clientWidth;
+			const newHeight = containerEl!.clientHeight;
+			// 容差 1px 避免浮点舍入误判；尺寸无变化时跳过
+			if (Math.abs(newWidth - width) < 1 && Math.abs(newHeight - height) < 1) return;
+			width = newWidth;
+			height = newHeight;
+			svg.attr('viewBox', `0 0 ${width} ${height}`);
+			resizeSpark();
+			applyForces();
+			simulation.alpha(0.3).restart();
+			// 关键：重新应用 zoom transform，基于新尺寸重新计算平移量
+			setInitialZoom(0);
+		});
+	}
+	resizeSpark();
 
 	// adjacency for hover highlighting
 	const neighbors = new Map<string, Set<string>>();
@@ -335,10 +466,10 @@ const graphData = { nodes, links };
 	}
 
 	// 文章稍大、标签略小，二者尺寸接近
-	const radius = (n: GNode) => (n.type === 'tag' ? 6 : 8);
+	const radius = (n: GNode) => (n.type === 'tag' ? 7 : 6);
 	// 每类纯色（不再用深浅编码引用数）
-	// 文章用沉稳灰、标签用赭石橙，灰/橙搭配区分度清晰且不刺眼
-	const fill = (n: GNode) => (n.type === 'tag' ? '#c2823c' : '#6b7280');
+	// 标签用蓝紫色，文章用赭石橙，冷暖对比清晰
+	const fill = (n: GNode) => (n.type === 'tag' ? '#4f46b5' : '#c2823c');
 
 	const simulation = d3
 		.forceSimulation<GNode>(raw.nodes)
@@ -349,9 +480,12 @@ const graphData = { nodes, links };
 				.id((d) => d.id)
 				.distance((l) => {
 					const s = l.source as GNode, t = l.target as GNode;
-					return s.type === t.type ? 100 : 75;
+					return s.type === t.type ? 28 : 80; // 占位值，会被 applyForces 覆盖
 				})
-				.strength(0.45),
+				.strength((l: any) => {
+					const s = l.source as GNode, t = l.target as GNode;
+					return s.type === t.type ? 0.8 : 0.45; // 簇内引力更强
+				}),
 		)
 		// 强斥力 + 大作用范围，让节点天然铺到画布尺度
 		.force('charge', d3.forceManyBody().strength(-450).distanceMax(800))
@@ -360,22 +494,36 @@ const graphData = { nodes, links };
 		// 水平方向收一点（避免横向连线被拉太长），垂直方向紧
 		.force('x', d3.forceX(width / 2).strength(0.07))
 		.force('y', d3.forceY(height / 2).strength(0.18))
-		// 大碰撞半径：节点之间留出文字空间，缓解 label 重叠
-		.force('collide', d3.forceCollide<GNode>().radius((d) => radius(d) + 22));
+		// 碰撞半径缩小，让簇内节点能靠得更近（只留出 label 最小空间）
+		.force('collide', d3.forceCollide<GNode>().radius((d) => radius(d) + 2))
+		.alphaDecay(0.015); // 加快收敛（默认 0.0228）
+
+	// 用实际画布尺寸初始化各力（覆盖上面写死的基准常量）
+	applyForces();
 
 	const link = linkLayer
 		.selectAll<SVGLineElement, GLink>('line')
 		.data(raw.links)
 		.join('line')
 		.attr('stroke', 'rgba(120,120,120,0.45)')
-		.attr('stroke-width', 1);
+		.attr('stroke-width', 1.4)
+		.attr('stroke-linecap', 'round')
+		.attr('stroke-dasharray', '0.1 6');
 
 	const node = nodeLayer
 		.selectAll<SVGGElement, GNode>('g.node')
 		.data(raw.nodes)
 		.join('g')
 		.attr('class', 'node')
-		.style('cursor', (d) => (d.type === 'post' ? 'pointer' : 'default'));
+		.style('cursor', (d) => (d.type === 'post' ? 'pointer' : 'default'))
+		.style('opacity', 0);
+
+	// 节点逐个淡入（每个延迟 50ms，持续时间 500ms）
+	node.transition()
+		.delay((_d: GNode, i: number) => i * 50)
+		.duration(500)
+		.ease(d3.easeCubicOut)
+		.style('opacity', 1);
 
 	node
 		.append('circle')
@@ -394,7 +542,10 @@ const graphData = { nodes, links };
 		.attr('dy', '0.34em')
 		.attr('font-size', 9)
 		.attr('font-weight', 700)
-		.attr('fill', '#5a2a00')
+		.attr('fill', '#ffa94d') // 亮橘色，在蓝紫底上对比度高
+		.attr('stroke', '#000')
+		.attr('stroke-width', 1.5)
+		.attr('paint-order', 'stroke') // 描边在底层，填充在上层
 		.attr('pointer-events', 'none');
 
 	node
@@ -512,24 +663,10 @@ const graphData = { nodes, links };
 			applyView();
 		});
 
+	// 点击空白处清除高亮
 	svg.on('click', () => { pinned = null; applyView(); });
 
-	// zoom & pan
-	const zoom = d3.zoom<SVGSVGElement, unknown>()
-		.scaleExtent([0.15, 4])
-		.on('zoom', (event) => root.attr('transform', event.transform.toString()));
-	svg.call(zoom as any);
-
-	// 初始/重置时给画布一个轻微放大，以画布中心为锚点
-	const INITIAL_SCALE = 1.25;
-	function setInitialZoom(duration = 0) {
-		const k = INITIAL_SCALE;
-		const t = d3.zoomIdentity
-			.translate((width * (1 - k)) / 2, (height * (1 - k)) / 2)
-			.scale(k);
-		const sel = duration > 0 ? svg.transition().duration(duration) : svg;
-		(sel as any).call(zoom.transform, t);
-	}
+	// 初始缩放
 	setInitialZoom();
 
 	const searchEl = document.getElementById('graph-search') as HTMLInputElement | null;
@@ -577,6 +714,12 @@ const graphData = { nodes, links };
 
 	// ticking
 	simulation.on('tick', () => {
+		// 边界约束：margin 按画布尺寸比例，大画布留白更大
+		const margin = Math.min(width, height) * 0.05; // 较小边的 5%
+		for (const n of raw.nodes) {
+			if (n.x != null) n.x = Math.max(margin, Math.min(width - margin, n.x));
+			if (n.y != null) n.y = Math.max(margin, Math.min(height - margin, n.y));
+		}
 		link
 			.attr('x1', (d: any) => d.source.x)
 			.attr('y1', (d: any) => d.source.y)
@@ -585,15 +728,120 @@ const graphData = { nodes, links };
 		node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
 	});
 
-	// resize
-	const ro = new ResizeObserver(() => {
-		width = containerEl.clientWidth;
-		height = containerEl.clientHeight;
-		svg.attr('viewBox', `0 0 ${width} ${height}`);
-		simulation.force('center', d3.forceCenter(width / 2, height / 2));
-		simulation.force('x', d3.forceX(width / 2).strength(0.07));
-		simulation.force('y', d3.forceY(height / 2).strength(0.18));
-		simulation.alpha(0.3).restart();
-	});
+	// 双重监听：window resize + ResizeObserver，确保尺寸变化一定能捕获
+	window.addEventListener('resize', updateSize);
+	const ro = new ResizeObserver(updateSize);
 	ro.observe(containerEl);
+
+	// 首次加载时容器可能还在布局（flex: 1 需父元素高度先定），推迟到下一帧再同步尺寸
+	requestAnimationFrame(() => updateSize());
+
+	// ── 风线特效：几条风线打着旋从一个节点飞到相邻节点 ──────────────
+	type Strand = { phase: number; amp: number; turns: number; dir: number };
+	type Gust = {
+		s: GNode; t: GNode; born: number; duration: number; strands: Strand[];
+	};
+	const gusts: Gust[] = [];
+	// 飞行速度：每单位边长耗时（ms）。值越大飞得越慢。
+	const SPEED_MS_PER_UNIT = 7;
+
+	function emitGust() {
+		if (!raw.links.length) return;
+		const l = raw.links[Math.floor(Math.random() * raw.links.length)];
+		const s = l.source as GNode, t = l.target as GNode;
+		if (s.x == null || t.x == null) return;
+		const dist = Math.hypot((t.x! - s.x!), (t.y! - s.y!));
+		const STRANDS = 3;
+		const strands: Strand[] = [];
+		// 风线横向摆幅：总宽约 2*amp ≈ 文章球直径(7*2=14)的两倍(28)
+		const baseAmp = 14;
+		for (let i = 0; i < STRANDS; i++) {
+			strands.push({
+				phase: Math.random() * Math.PI * 2,
+				amp: baseAmp + Math.random() * 3,
+				turns: 1.2 + Math.random() * 0.8,
+				dir: Math.random() < 0.5 ? 1 : -1,
+			});
+		}
+		gusts.push({
+			s, t, born: performance.now(),
+			// 飞行时长与边长成正比 → 视觉速度恒定，随画布缩放保持比例。
+			// SPEED_MS_PER_UNIT 越大飞得越慢；floor 防止极短边一闪而过。
+			duration: Math.max(650, dist * SPEED_MS_PER_UNIT),
+			strands,
+		});
+	}
+
+	// 沿边的螺旋点：u∈[0,1] 映射成一条螺旋点（模拟坐标系，未经 zoom 变换）
+	function strandPoint(g: Gust, st: Strand, u: number) {
+		const sx = g.s.x!, sy = g.s.y!, tx = g.t.x!, ty = g.t.y!;
+		const dx = tx - sx, dy = ty - sy;
+		const len = Math.hypot(dx, dy) || 1;
+		const bx = sx + dx * u, by = sy + dy * u;
+		const px = -dy / len, py = dx / len;
+		const ang = st.phase + u * st.turns * Math.PI * 2 * st.dir;
+		const env = Math.sin(u * Math.PI);
+		const off = Math.sin(ang) * st.amp * env;
+		return { x: bx + px * off, y: by + py * off };
+	}
+
+	// 飘带长度 = 边长的比例值，故已随场景缩放保持比例（0.45 = 飘带占边长 45%）
+	const TAIL_LEN = 0.45;
+	function renderWind(now: number) {
+		sparkCtx.clearRect(0, 0, width, height);
+		const k = curTransform.k;
+		const map = (p: { x: number; y: number }) => ({
+			x: curTransform.x + p.x * k,
+			y: curTransform.y + p.y * k,
+		});
+		for (let i = gusts.length - 1; i >= 0; i--) {
+			const g = gusts[i];
+			const prog = (now - g.born) / g.duration;
+			if (prog >= 1 + TAIL_LEN) { gusts.splice(i, 1); continue; }
+			for (const st of g.strands) {
+				// 头部前进用 ease-out（先快后慢），尾巴回收线性略慢 → 视觉更飘逸
+				const headRaw = Math.min(1, prog);
+				const head = headRaw < 1 ? 1 - Math.pow(1 - headRaw, 1.6) : 1; // ease-out
+				const tail = Math.max(0, prog - TAIL_LEN);
+				const SEG = 22;
+				sparkCtx.lineCap = 'round';
+				sparkCtx.lineJoin = 'round';
+				for (let seg = 0; seg < SEG; seg++) {
+					const u0 = tail + (head - tail) * (seg / SEG);
+					const u1 = tail + (head - tail) * ((seg + 1) / SEG);
+					const p0 = map(strandPoint(g, st, u0));
+					const p1 = map(strandPoint(g, st, u1));
+					const a = seg / SEG; // 0=尾 1=头
+					// 黄橘色 → 深蓝紫色渐变，头部蓝紫更深沉明显
+					const yellowOrange = [240, 180, 40], bluePurple = [65, 55, 150]; // 蓝紫更深
+					let cr, cg, cb;
+					cr = yellowOrange[0] + (bluePurple[0] - yellowOrange[0]) * a;
+					cg = yellowOrange[1] + (bluePurple[1] - yellowOrange[1]) * a;
+					cb = yellowOrange[2] + (bluePurple[2] - yellowOrange[2]) * a;
+					const alpha = 0.08 + a * 0.42; // 尾透明、头半透明，整体更淡
+					sparkCtx.strokeStyle = `rgba(${cr|0},${cg|0},${cb|0},${alpha})`;
+					sparkCtx.lineWidth = (0.8 + a * 1.4) * Math.max(0.6, k);
+					sparkCtx.beginPath();
+					sparkCtx.moveTo(p0.x, p0.y);
+					sparkCtx.lineTo(p1.x, p1.y);
+					sparkCtx.stroke();
+				}
+				const hp = map(strandPoint(g, st, head));
+				sparkCtx.beginPath();
+				sparkCtx.arc(hp.x, hp.y, 1.8 * Math.max(0.6, k), 0, Math.PI * 2);
+				sparkCtx.fillStyle = 'rgba(190,170,230,0.9)';
+				sparkCtx.fill();
+			}
+		}
+		requestAnimationFrame(renderWind);
+	}
+	requestAnimationFrame(renderWind);
+
+	// 每隔一段时间随机挑一条边吹一阵风
+	(function loop() {
+		emitGust();
+		setTimeout(loop, 700 + Math.random() * 900);
+	})();
+
+
 </script>

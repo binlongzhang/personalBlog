@@ -1,0 +1,152 @@
+---
+// 全站背景：WebGL 片元着色器渲染的灰底黑烟流光。
+// 固定满屏、垫在所有内容下层（z-index:-1）。无 WebGL 时回退到纯灰底。
+---
+
+<canvas id="bg-shader" aria-hidden="true"></canvas>
+
+<style is:global>
+	/* 让背景透出：中和各页面的 body 底色 */
+	html {
+		background: #e8eaee;
+	}
+	body {
+		background: transparent !important;
+	}
+	#bg-shader {
+		position: fixed;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		z-index: -1;
+		display: block;
+		pointer-events: none;
+	}
+</style>
+
+<script id="bg-vs" type="x-shader/x-vertex">
+attribute vec2 a_pos;
+void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+</script>
+
+<script id="bg-fs" type="x-shader/x-fragment">
+precision highp float;
+uniform vec2 u_res;
+uniform float u_time;
+
+vec2 hash(vec2 p){
+	p = vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)));
+	return -1.0 + 2.0*fract(sin(p)*43758.5453123);
+}
+float noise(vec2 p){
+	vec2 i = floor(p), f = fract(p);
+	vec2 u = f*f*(3.0-2.0*f);
+	return mix(mix(dot(hash(i+vec2(0,0)), f-vec2(0,0)),
+	               dot(hash(i+vec2(1,0)), f-vec2(1,0)), u.x),
+	           mix(dot(hash(i+vec2(0,1)), f-vec2(0,1)),
+	               dot(hash(i+vec2(1,1)), f-vec2(1,1)), u.x), u.y);
+}
+float fbm(vec2 p){
+	float v = 0.0, a = 0.5;
+	for(int i=0;i<5;i++){ v += a*noise(p); p *= 2.0; a *= 0.5; }
+	return v;
+}
+
+void main(){
+	vec2 uv = gl_FragCoord.xy / u_res.xy;
+	float aspect = u_res.x / u_res.y;
+	vec2 p = uv; p.x *= aspect;
+	float t = u_time * 0.025;
+
+	// 域扭曲：让流场像烟雾缠绕
+	vec2 q = vec2(fbm(p*1.5 + vec2(0.0, t)), fbm(p*1.5 + vec2(5.2, -t)));
+	vec2 r = vec2(fbm(p*1.5 + 2.0*q + vec2(1.7, 9.2) + 0.15*t),
+	              fbm(p*1.5 + 2.0*q + vec2(8.3, 2.8) - 0.13*t));
+	float f = fbm(p*1.5 + 2.5*r);
+	f = clamp(f * 1.4 + 0.5, 0.0, 1.0);
+
+	// 调色板：浅灰底 → 淡灰烟（整体提亮，保证前景文字可读）
+	vec3 greyBase = vec3(0.906, 0.910, 0.922);
+	vec3 midGrey  = vec3(0.660, 0.665, 0.685);
+	vec3 smoke    = vec3(0.380, 0.380, 0.410);
+
+	vec3 col = greyBase;
+	col = mix(col, midGrey, smoothstep(0.45, 0.75, f));
+	col = mix(col, smoke,   smoothstep(0.82, 0.97, f) * 0.35);
+
+	gl_FragColor = vec4(col, 1.0);
+}
+</script>
+
+<script>
+	function initBackground() {
+		const canvas = document.getElementById('bg-shader') as HTMLCanvasElement | null;
+		if (!canvas) return;
+		const gl = (canvas.getContext('webgl') ||
+			canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+		if (!gl) {
+			canvas.style.background = '#e8eaee';
+			return;
+		}
+
+		function compile(type: number, src: string) {
+			const s = gl!.createShader(type)!;
+			gl!.shaderSource(s, src);
+			gl!.compileShader(s);
+			if (!gl!.getShaderParameter(s, gl!.COMPILE_STATUS)) {
+				console.error(gl!.getShaderInfoLog(s));
+			}
+			return s;
+		}
+		const vsSrc = document.getElementById('bg-vs')!.textContent!;
+		const fsSrc = document.getElementById('bg-fs')!.textContent!;
+		const prog = gl.createProgram()!;
+		gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+		gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+		gl.linkProgram(prog);
+		gl.useProgram(prog);
+
+		const buf = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+		const loc = gl.getAttribLocation(prog, 'a_pos');
+		gl.enableVertexAttribArray(loc);
+		gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+		const uRes = gl.getUniformLocation(prog, 'u_res');
+		const uTime = gl.getUniformLocation(prog, 'u_time');
+
+		function resize() {
+			const DPR = Math.min(1.5, window.devicePixelRatio || 1);
+			canvas!.width = window.innerWidth * DPR;
+			canvas!.height = window.innerHeight * DPR;
+			gl!.viewport(0, 0, canvas!.width, canvas!.height);
+		}
+		resize();
+		window.addEventListener('resize', resize);
+
+		const start = performance.now();
+		let raf = 0;
+		function frame() {
+			const tt = (performance.now() - start) / 1000;
+			gl!.uniform2f(uRes, canvas!.width, canvas!.height);
+			gl!.uniform1f(uTime, tt);
+			gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
+			raf = requestAnimationFrame(frame);
+		}
+		raf = requestAnimationFrame(frame);
+
+		// 离开页面（含 Astro 视图切换）时停止，避免多份 rAF 叠加
+		document.addEventListener(
+			'astro:before-swap',
+			() => {
+				cancelAnimationFrame(raf);
+				window.removeEventListener('resize', resize);
+			},
+			{ once: true },
+		);
+	}
+
+	initBackground();
+	document.addEventListener('astro:after-swap', initBackground);
+</script>
